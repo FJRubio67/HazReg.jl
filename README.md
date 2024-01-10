@@ -1,7 +1,5 @@
 # HazReg.jl
 
-# HazReg R package
-
 The `HazReg` Julia package implements the following parametric hazard-based regression models for (overall) survival data.
 
 - General Hazard (GH) model.
