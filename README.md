@@ -13,6 +13,12 @@ The `HazReg` Julia package implements the following parametric hazard-based regr
 
 These models are fitted using the Julia package `Optim`, with methods "NM" (NelderMead), "N" (Newton), "LBFGS" (LBFGS), "CG" (ConjugateGradient), "GD" (GradientDescent). Thus, the user needs to specify the initial points and to check the convergence of the optimisation step, as usual.
 
+To install the package, use:
+
+```
+Pkg.add(url="https://github.com/FJRubio67/HazReg.jl")
+```
+
 
 The current version of the `HazReg` Julia package implements the following parametric baseline hazards for the models discussed in the previous section, using the command `GHMLE`.
 
