@@ -17,6 +17,8 @@ To install the package, use:
 
 ```
 Pkg.add(url="https://github.com/FJRubio67/HazReg.jl")
+
+using HazReg
 ```
 
 
@@ -41,15 +43,14 @@ All positive parameters are transformed into the real line using a `log` link (r
 
 Illustrative examples and a description of the available models can be found at:
 
-1. [Power Generalised Weibull Distribution](https://fjrubio.quarto.pub/power-generalised-weibull-distribution/)
-2. [Generalised Gamma Distribution](https://fjrubio.quarto.pub/generalised-gamma-distribution/)
-3. [Exponentiated Weibull Distribution](https://fjrubio.quarto.pub/exponentiated-weibull-distribution/)
-4. [Some hazard functions in Julia](https://fjrubio.quarto.pub/some-hazard-functions-in-julia/)
+1. [HazReg.jl: Parametric Hazard-based regression models for survival data](https://fjrubio.quarto.pub/hazregjulia/)
+2. [simGHJulia](https://fjrubio.quarto.pub/simghjulia/)
+3. [Power Generalised Weibull Distribution](https://fjrubio.quarto.pub/power-generalised-weibull-distribution/)
+4. [Generalised Gamma Distribution](https://fjrubio.quarto.pub/generalised-gamma-distribution/)
+5. [Exponentiated Weibull Distribution](https://fjrubio.quarto.pub/exponentiated-weibull-distribution/)
+6. [Some hazard functions in Julia](https://fjrubio.quarto.pub/some-hazard-functions-in-julia/)
 
-```
-...
-```
 
 See also: 
-- [HazReg R package]()
+- [HazReg R package](https://github.com/FJRubio67/HazReg)
 
