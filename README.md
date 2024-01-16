@@ -46,7 +46,7 @@ All positive parameters are transformed into the real line using a `log` link (r
 Illustrative examples and a description of the available models can be found at:
 
 1. [HazReg.jl: Parametric Hazard-based regression models for survival data](https://fjrubio.quarto.pub/hazregjulia/)
-2. [simGHJulia](https://fjrubio.quarto.pub/simghjulia/)
+2. [Julia simGH: simulating times to event from a general hazard structure](https://fjrubio.quarto.pub/simghjulia/)
 3. [Power Generalised Weibull Distribution](https://fjrubio.quarto.pub/power-generalised-weibull-distribution/)
 4. [Generalised Gamma Distribution](https://fjrubio.quarto.pub/generalised-gamma-distribution/)
 5. [Exponentiated Weibull Distribution](https://fjrubio.quarto.pub/exponentiated-weibull-distribution/)
