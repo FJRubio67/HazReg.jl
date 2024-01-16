@@ -16,6 +16,8 @@ These models are fitted using the Julia package `Optim`, with methods "NM" (Neld
 To install the package, use:
 
 ```
+using Pkg
+
 Pkg.add(url="https://github.com/FJRubio67/HazReg.jl")
 
 using HazReg
