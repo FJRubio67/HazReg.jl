@@ -15,8 +15,7 @@ Returns a list containing the upper and lower conf.int limits, the transformed M
 
 
 function ConfInt(; FUN::Function, MLE::Vector{Float64}, level::Float64)
-    dist = Normal(0,1)
-    sd_int = abs(quantile(dist, 0.5*(1-level)))
+    sd_int = abs(quantile(Normal(0,1), 0.5*(1-level)))
 
     HESS = ForwardDiff.hessian(FUN, MLE)
     Fisher_Info = inv(HESS)
