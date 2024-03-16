@@ -1,4 +1,4 @@
-<a href="https://lrnv.github.io/Copulas.jl/dev"><img src="https://img.shields.io/badge/docs-dev-blue.svg" alt="Dev" /></a>
+<a href="https://FJRubio67.github.io/HazReg.jl/dev"><img src="https://img.shields.io/badge/docs-dev-blue.svg" alt="Dev" /></a>
 
 # HazReg.jl
 
