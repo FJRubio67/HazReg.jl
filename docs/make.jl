@@ -1,15 +1,15 @@
 using Documenter
 using HazReg
 
+DocMeta.setdocmeta!(HazReg, :DocTestSetup, :(using HazReg); recursive=true)
+
 makedocs(
-    sitename = "HazReg",
+    sitename = "HazReg.jl",
     format = Documenter.HTML(),
     modules = [HazReg]
 )
 
-# Documenter can also automatically deploy documentation to gh-pages.
-# See "Hosting Documentation" and deploydocs() in the Documenter manual
-# for more information.
-#=deploydocs(
-    repo = "<repository url>"
-)=#
+deploydocs(;
+    repo="github.com/FJRubio67/HazReg.jl",
+    devbranch="main",
+)
