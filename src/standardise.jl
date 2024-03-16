@@ -4,7 +4,7 @@ Function to standardise a vector.
 ----------------------------------------------------------------------------------------
 =#
 
-function standardise(x::Vector)
+function standardise(x)
     out = (x .- mean(x)) ./ std(x)
      return out
  end
