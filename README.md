@@ -1,3 +1,5 @@
+<a href="https://lrnv.github.io/Copulas.jl/dev"><img src="https://img.shields.io/badge/docs-dev-blue.svg" alt="Dev" /></a>
+
 # HazReg.jl
 
 The `HazReg` Julia package implements the following parametric hazard-based regression models for (overall) survival data.
