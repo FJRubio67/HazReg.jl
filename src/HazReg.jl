@@ -11,10 +11,10 @@ using SpecialFunctions
 using ForwardDiff
 
 #= Includes =#
-include("univ_dists/ExponentiatedWeibull.jl")
-include("univ_dists/GeneralizedGamma.jl")
-include("univ_dists/PowerGeneralizedWeibull.jl")
-include("univ_dists/other_hazards.jl")
+include("hazards.jl")
+include("EW.jl")
+include("GenGamma.jl")
+include("PGW.jl")
 include("GHMLE.jl")
 include("simGH.jl")
 include("ConfInt.jl")
@@ -26,9 +26,37 @@ export  simGH
 export  ConfInt
 export  standardise
 
-export ExponentiatedWeibull
-export GeneralizedGamma
-export PowerGeneralizedWeibull
-export haz, loghaz, cumhaz
+export  pdfEW
+export  cdfEW
+export  qEW
+export  hEW
+export  chEW
+export  randEW
+
+export  pdfPGW
+export  ccdfPGW
+export  qPGW
+export  hPGW
+export  chPGW
+export  randPGW
+
+export  ccdfGenGamma
+export  pdfGenGamma
+export  qGenGamma
+export  hGenGamma
+export  chGenGamma
+export  randGenGamma
+
+export hLogNormal
+export chLogNormal
+
+export hLogLogistic
+export chLogLogistic
+
+export hWeibull
+export chWeibull
+
+export hGamma
+export chGamma
 
 end
