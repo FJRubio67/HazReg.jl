@@ -1,0 +1,9 @@
+# Site settings
+title: HazReg.jl
+author: F. Javier Rubio
+  name: HazReg
+  email: fxrubio@gmail.com
+description: "HazReg.jl package"
+
+# Build settings
+remote_theme: jekyll/minima
