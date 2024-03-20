@@ -77,6 +77,7 @@ using HazReg
 using Distributions
 using Random
 using DataFrames
+using Optim
 
 # Sample size
 n = 10000
@@ -102,8 +103,8 @@ cens = 10
 
 # Data simulation
 simdat = simGH(seed = 1234, n = n, des = des, des_t = des_t,
-      theta = theta0, alpha = alpha0, beta = beta0, 
-      hstr = "GH", dist = "PGW")
+      alpha = alpha0, beta = beta0, 
+      hstr = "GH", dist = PowerGeneralizedWeibull(theta0...))
 
 # status variable
 status = collect(Bool,(simdat .< cens))
@@ -113,8 +114,8 @@ simdat = min.(simdat, cens)
 
 # Model fit
 OPTPGWGH = GHMLE(init = fill(0.0, 3 + 1 + size(des)[2]), times = simdat,
-            status = status, hstr = "GH", dist = "PGW", 
-            des = des, des_t = des_t, method = "NM", maxit = 1000)
+            status = status, hstr = "GH", dist = PowerGeneralizedWeibull, 
+            des = des, des_t = des_t, method = NelderMead(), maxit = 1000)
 
 MLEPGWGH = [exp(OPTPGWGH[1].minimizer[j]) for j in 1:3] 
 append!(MLEPGWGH, OPTPGWGH[1].minimizer[4:end]) 
@@ -125,7 +126,6 @@ COMP = DataFrame(COMP, :auto);
  
 rename!( COMP, ["True", "MLE"] );
 println(COMP)
-
 ```
 
 
@@ -133,11 +133,6 @@ println(COMP)
 ## PGW-PH model
 
 ```@example 1
-# Required packages
-using HazReg
-using Distributions
-using Random
-using DataFrames
 
 # Sample size
 n = 10000
@@ -161,8 +156,8 @@ cens = 10
 
 # Data simulation
 simdat = simGH(seed = 1234, n = n, des = des, des_t = nothing,
-      theta = theta0, alpha = nothing, beta = beta0, 
-      hstr = "PH", dist = "PGW")
+      alpha = nothing, beta = beta0, 
+      hstr = "PH", dist = PowerGeneralizedWeibull(theta0...))
 
 # status variable
 status = collect(Bool,(simdat .< cens))
@@ -172,8 +167,8 @@ simdat = min.(simdat, cens)
 
 # Model fit
 OPTPGWPH = GHMLE(init = fill(0.0, 3 + size(des)[2]), times = simdat,
-            status = status, hstr = "PH", dist = "PGW", 
-            des = des, des_t = nothing, method = "NM", maxit = 1000)
+            status = status, hstr = "PH", dist = PowerGeneralizedWeibull, 
+            des = des, des_t = nothing, method = NelderMead(), maxit = 1000)
 
 MLEPGWPH = [exp(OPTPGWPH[1].minimizer[j]) for j in 1:3] 
 append!(MLEPGWPH, OPTPGWPH[1].minimizer[4:end]) 
@@ -184,19 +179,12 @@ COMP = DataFrame(COMP, :auto);
  
 rename!( COMP, ["True", "MLE"] );
 println(COMP)
-
 ```
 
 
 ## PGW-AFT model
 
 ```@example 1
-# Required packages
-using HazReg
-using Distributions
-using Random
-using DataFrames
-
 # Sample size
 n = 10000
 
@@ -219,8 +207,8 @@ cens = 10
 
 # Data simulation
 simdat = simGH(seed = 1234, n = n, des = des, des_t = nothing,
-      theta = theta0, alpha = nothing, beta = beta0, 
-      hstr = "AFT", dist = "PGW")
+      alpha = nothing, beta = beta0, 
+      hstr = "AFT", dist = PowerGeneralizedWeibull(theta0...))
 
 # status variable
 status = collect(Bool,(simdat .< cens))
@@ -230,8 +218,8 @@ simdat = min.(simdat, cens)
 
 # Model fit
 OPTPGWAFT = GHMLE(init = fill(0.0, 3 + size(des)[2]), times = simdat,
-            status = status, hstr = "AFT", dist = "PGW", 
-            des = des, des_t = nothing, method = "NM", maxit = 1000)
+            status = status, hstr = "AFT", dist = PowerGeneralizedWeibull, 
+            des = des, des_t = nothing, method = NelderMead(), maxit = 1000)
 
 MLEPGWAFT = [exp(OPTPGWAFT[1].minimizer[j]) for j in 1:3] 
 append!(MLEPGWAFT, OPTPGWAFT[1].minimizer[4:end]) 
@@ -242,7 +230,6 @@ COMP = DataFrame(COMP, :auto);
  
 rename!( COMP, ["True", "MLE"] );
 println(COMP)
-
 ```
 
 
@@ -250,11 +237,6 @@ println(COMP)
 ## PGW-AH model
 
 ```@example 1
-# Required packages
-using HazReg
-using Distributions
-using Random
-using DataFrames
 
 # Sample size
 n = 10000
@@ -278,8 +260,8 @@ cens = 10
 
 # Data simulation
 simdat = simGH(seed = 1234, n = n, des = nothing, des_t = des_t,
-      theta = theta0, alpha = alpha0, beta = nothing, 
-      hstr = "AH", dist = "PGW")
+      alpha = alpha0, beta = nothing, 
+      hstr = "AH", dist = PowerGeneralizedWeibull(theta0...))
 
 # status variable
 status = collect(Bool,(simdat .< cens))
@@ -289,8 +271,8 @@ simdat = min.(simdat, cens)
 
 # Model fit
 OPTPGWAH = GHMLE(init = fill(0.0, 3 + size(des)[2]), times = simdat,
-            status = status, hstr = "AH", dist = "PGW", 
-            des = nothing, des_t = des_t, method = "NM", maxit = 1000)
+            status = status, hstr = "AH", dist = PowerGeneralizedWeibull, 
+            des = nothing, des_t = des_t, method = NelderMead(), maxit = 1000)
 
 MLEPGWAH = [exp(OPTPGWAH[1].minimizer[j]) for j in 1:3] 
 append!(MLEPGWAH, OPTPGWAH[1].minimizer[4:end]) 
@@ -301,7 +283,6 @@ COMP = DataFrame(COMP, :auto);
  
 rename!( COMP, ["True", "MLE"] );
 println(COMP)
-
 ```
 
 ```@bibliography

@@ -1,3 +1,11 @@
+```@meta
+CurrentModule = HazReg
+```
+
 # HazReg.jl
 
-Documentation for HazReg.jl
+All docstrings from the package
+
+```@autodocs
+Modules = [HazReg]
+```
