@@ -53,8 +53,8 @@ function GHMLE(;
     #= -Log-likelihood =#
 
     # fix nothings by replacing by empty matrices. 
-    des = isnothing(des) ? Float64[;;] : des
-    des_t = isnothing(des_t) ? Float64[;;] : des_t
+    des = isnothing(des) ? Array{Float64}(undef,0,0) : des
+    des_t = isnothing(des_t) ? Array{Float64}(undef,0,0) : des_t
 
     # get number of parameters: 
     npd = length(Distributions.params(dist()))
