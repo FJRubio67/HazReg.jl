@@ -27,7 +27,7 @@ using HazReg
 
 ```@example 1
 #= Hazard function =#
-plot(t -> hLogNormal(t, 0.5, 1),
+plot(t -> haz(LogNormal(0.5, 1), t),
       xlabel = "x", ylabel = "Hazard", title = "LogNormal distribution",
     xlims = (0,10),   xticks = 0:1:10, label = "", 
     xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),
@@ -37,7 +37,7 @@ plot(t -> hLogNormal(t, 0.5, 1),
 
 ```@example 1
 #= Cumulative Hazard function =#
-plot(t -> chLogNormal(t, 0.5, 1),
+plot(t -> cumhaz(LogNormal(0.5, 1),t),
       xlabel = "x", ylabel = "Cumulative Hazard", title = "LogNormal distribution",
     xlims = (0,10),   xticks = 0:1:10, label = "", 
     xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),
@@ -50,7 +50,7 @@ plot(t -> chLogNormal(t, 0.5, 1),
 
 ```@example 1
 #= Hazard function =#
-plot(t -> hLogLogistic(t, 1, 0.5),
+plot(t -> haz(LogLogistic(1, 0.5),t),
       xlabel = "x", ylabel = "Hazard", title = "LogLogistic distribution",
     xlims = (0,10),   xticks = 0:1:10, label = "", 
     xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),
@@ -60,7 +60,7 @@ plot(t -> hLogLogistic(t, 1, 0.5),
 
 ```@example 1
 #= Cumulative Hazard function =#
-plot(t -> chLogLogistic(t, 1, 0.5),
+plot(t -> cumhaz(LogLogistic(1, 0.5),t),
       xlabel = "x", ylabel = "Cumulative Hazard", title = "LogLogistic distribution",
     xlims = (0,10),   xticks = 0:1:10, label = "", 
     xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),
@@ -72,7 +72,7 @@ plot(t -> chLogLogistic(t, 1, 0.5),
 
 ```@example 1
 #= Weibull function =#
-plot(t -> hWeibull(t, 3, 0.5),
+plot(t -> haz(Weibull(3, 0.5),t),
       xlabel = "x", ylabel = "Hazard", title = "Weibull distribution",
     xlims = (0,10),   xticks = 0:1:10, label = "", 
     xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),
@@ -82,7 +82,7 @@ plot(t -> hWeibull(t, 3, 0.5),
 
 ```@example 1
 #= Cumulative Hazard function =#
-plot(t -> chWeibull(t, 3, 0.5),
+plot(t -> cumhaz(Weibull(3, 0.5),t),
       xlabel = "x", ylabel = "Cumulative Hazard", title = "Weibull distribution",
     xlims = (0,10),   xticks = 0:1:10, label = "", 
     xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),
@@ -95,7 +95,7 @@ plot(t -> chWeibull(t, 3, 0.5),
 
 ```@example 1
 #= Weibull function =#
-plot(t -> hGamma(t, 3, 0.5),
+plot(t -> haz(Gamma(3, 0.5),t),
       xlabel = "x", ylabel = "Hazard", title = "Gamma distribution",
     xlims = (0,10),   xticks = 0:1:10, label = "", 
     xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),
@@ -105,7 +105,7 @@ plot(t -> hGamma(t, 3, 0.5),
 
 ```@example 1
 #= Cumulative Hazard function =#
-plot(t -> chGamma(t, 3, 0.5),
+plot(t -> cumhaz(Gamma(3, 0.5),t),
       xlabel = "x", ylabel = "Cumulative Hazard", title = "Gamma distribution",
     xlims = (0,10),   xticks = 0:1:10, label = "", 
     xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),
