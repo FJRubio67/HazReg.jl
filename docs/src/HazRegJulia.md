@@ -15,7 +15,7 @@ regression models for (overall) survival data.
 
 -   Accelerated Hazards (AH) model [chen:2000](@cite).
 
-These models are fitted using the Julia package `Optim` (methods included: NelderMead() (NelderMead), "N" (Newton), "LBFGS" (LBFGS), "CG" (ConjugateGradient), "GD" (GradientDescent)). Thus, the user needs to specify the initial points and to check the convergence of the optimisation step, as usual.
+These models are fitted using the Julia package `Optim` (methods included: "NM" (NelderMead), "N" (Newton), "LBFGS" (LBFGS), "CG" (ConjugateGradient), "GD" (GradientDescent)). Thus, the user needs to specify the initial points and to check the convergence of the optimisation step, as usual.
 
 A description of these hazard models is presented below as well as the available baseline hazards.
 
@@ -123,7 +123,6 @@ using Optim
 using LinearAlgebra
 using SpecialFunctions
 using ForwardDiff
-using Statistics
 
 
 using HazReg
@@ -155,65 +154,65 @@ times = df.time/365.25 ;
 ```@example 1
 # PGWGH
 OPTPGWGH = GHMLE(init = fill(0.0, 3 + size(des_t)[2] + size(des)[2]), times = times,
-            status = status, hstr = "GH", dist = PowerGeneralizedWeibull, 
-            des = des, des_t = des_t, method = NelderMead(), maxit = 1000)
+            status = status, hstr = "GH", dist = "PGW", 
+            des = des, des_t = des_t, method = "NM", maxit = 1000)
 
 # PGWAFT
 OPTPGWAFT = GHMLE(init = fill(0.0, 3 + size(des)[2]), times = times, 
-                  status = status, hstr = "AFT", dist = PowerGeneralizedWeibull, 
-                  des = des, des_t = nothing, method = NelderMead(), maxit = 1000)
+                  status = status, hstr = "AFT", dist = "PGW", 
+                  des = des, des_t = nothing, method = "NM", maxit = 1000)
 
 # PGWPH
 OPTPGWPH = GHMLE(init = fill(0.0, 3 +size(des)[2]), times = times, 
-                 status = status, hstr = "PH", dist = PowerGeneralizedWeibull, 
-                 des = des, des_t = nothing, method = NelderMead(), maxit = 1000)
+                 status = status, hstr = "PH", dist = "PGW", 
+                 des = des, des_t = nothing, method = "NM", maxit = 1000)
 
 # PGWAH
 OPTPGWAH = GHMLE(init = fill(0.0, 3 + size(des_t)[2] ), times = times, 
-                 status = status, hstr = "AH", dist = PowerGeneralizedWeibull, 
-                 des_t = des_t, des = nothing, method = NelderMead(), maxit = 1000)
+                 status = status, hstr = "AH", dist = "PGW", 
+                 des_t = des_t, des = nothing, method = "NM", maxit = 1000)
 
 
 # LLGH
 OPTLLGH = GHMLE(init = fill(0.0, 2 + size(des_t)[2] + size(des)[2]), times = times,
-                status = status, hstr = "GH", dist = LogLogistic, 
-                des = des, des_t = des_t, method = NelderMead(), maxit = 1000)
+                status = status, hstr = "GH", dist = "LogLogistic", 
+                des = des, des_t = des_t, method = "NM", maxit = 1000)
 
 # LLAFT
 OPTLLAFT = GHMLE(init = fill(0.0, 2 + size(des)[2]), times = times, 
-                  status = status, hstr = "AFT", dist = LogLogistic, 
-                  des = des, des_t = nothing, method = NelderMead(), maxit = 1000)
+                  status = status, hstr = "AFT", dist = "LogLogistic", 
+                  des = des, des_t = nothing, method = "NM", maxit = 1000)
 
 # LLPH
 OPTLLPH = GHMLE(init = fill(0.0, 2 + size(des)[2]), times = times, 
-                status = status, hstr = "PH", dist = LogLogistic, 
-                des = des, des_t = nothing, method = NelderMead(), maxit = 1000)
+                status = status, hstr = "PH", dist = "LogLogistic", 
+                des = des, des_t = nothing, method = "NM", maxit = 1000)
 
 # LLAH
 OPTLLAH = GHMLE(init = fill(0.0, 2 + size(des_t)[2]), times = times, 
-                status = status, hstr = "AH", dist = LogLogistic, 
-                des = nothing, des_t = des_t, method = NelderMead(), maxit = 1000)
+                status = status, hstr = "AH", dist = "LogLogistic", 
+                des = nothing, des_t = des_t, method = "NM", maxit = 1000)
 
 
 # EWGH
 OPTEWGH = GHMLE(init = fill(0.0, 3 + size(des_t)[2] + size(des)[2]), times = times, 
-                status = status, hstr = "GH", dist = ExponentiatedWeibull, 
-                des = des, des_t = des_t, method = NelderMead(), maxit = 1000)
+                status = status, hstr = "GH", dist = "EW", 
+                des = des, des_t = des_t, method = "NM", maxit = 1000)
 
 # GGGH
 OPTGGGH = GHMLE(init = fill(0.0, 3 + size(des_t)[2] + size(des)[2]), times = times,
-                status = status, hstr = "GH", dist = GeneralizedGamma,
-                des = des, des_t = des_t, method = NelderMead(), maxit = 1000)
+                status = status, hstr = "GH", dist = "GenGamma",
+                des = des, des_t = des_t, method = "NM", maxit = 1000)
 
 # LNGH
 OPTLNGH = GHMLE(init = fill(0.0, 2 + size(des_t)[2] + size(des)[2]), times = times, 
-                status = status, hstr = "GH", dist = LogNormal, 
-                des = des, des_t = des_t, method = NelderMead(), maxit = 1000)
+                status = status, hstr = "GH", dist = "LogNormal", 
+                des = des, des_t = des_t, method = "NM", maxit = 1000)
 
 # GGH
 OPTGGH = GHMLE(init = fill(0.0, 2 + size(des_t)[2] + size(des)[2]), times = times, 
-               status = status, hstr = "GH", dist = Gamma, 
-               des = des, des_t = des_t, method = Newton(), maxit = 1000)
+               status = status, hstr = "GH", dist = "Gamma", 
+               des = des, des_t = des_t, method = "N", maxit = 1000)
 
 # MLEs in the original parameterisations
 MLEPGWGH = [exp(OPTPGWGH[1].minimizer[j]) for j in 1:3] 
@@ -231,9 +230,9 @@ append!(MLEGGGH, OPTGGGH[1].minimizer[4:end])
 MLEGGH = [exp(OPTGGH[1].minimizer[j]) for j in 1:2] 
 append!(MLEGGH, OPTGGH[1].minimizer[3:end]) 
 
-MLELNGH = [exp(OPTLNGH[1].minimizer[1]), exp(OPTLNGH[1].minimizer[2]), OPTLNGH[1].minimizer[3:end]...]
+MLELNGH = [OPTLNGH[1].minimizer[1], exp(OPTLNGH[1].minimizer[2]), OPTLNGH[1].minimizer[3:end]...]
 
-MLELLGH = [exp(OPTLLGH[1].minimizer[1]), exp(OPTLLGH[1].minimizer[2]), OPTLLGH[1].minimizer[3:end]...]
+MLELLGH = [OPTLLGH[1].minimizer[1], exp(OPTLLGH[1].minimizer[2]), OPTLLGH[1].minimizer[3:end]...]
 
 MLES = hcat(MLEPGWGH, MLEEWGH, MLEGGGH, [MLEGGH[1], MLEGGH[2], nothing, MLEGGH[3:end]...],
             [MLELNGH[1], MLELNGH[2], nothing, MLELNGH[3:end]...],[MLELLGH[1], MLELLGH[2], nothing, MLELLGH[3:end]...])
@@ -244,6 +243,7 @@ rename!( MLES, ["PGWGH", "EWGH", "GGGH", "GGH", "LNGH", "LLGH"] )
 
 # MLEs for GH models
 println(MLES)
+
 ```
 
 ## Model Comparison
@@ -284,12 +284,35 @@ argmin(AICs)
 
 ```@example 1
 # Fitted baseline hazard functions for GH models
-PGWGHhaz(t) = haz(PowerGeneralizedWeibull(MLEPGWGH[1], MLEPGWGH[2], MLEPGWGH[3]),t)
-EWGHhaz(t) = haz(ExponentiatedWeibull(MLEEWGH[1], MLEEWGH[2], MLEEWGH[3]),t)
-GGGHhaz(t) = haz(GeneralizedGamma(MLEGGGH[1], MLEGGGH[2], MLEGGGH[3]),t)
-GGHhaz(t) = haz(Gamma(MLEGGH[1], MLEGGH[2]),t)
-LNGHhaz(t::Float64) = haz(LogNormal(MLELNGH[1], MLELNGH[2]),t)
-LLGHhaz(t::Float64) = haz(LogLogistic(MLELLGH[1], MLELLGH[2]),t)
+function PGWGHhaz(t::Float64) 
+    out = hPGW(t, MLEPGWGH[1], MLEPGWGH[2], MLEPGWGH[3])  
+    return out
+end
+
+function EWGHhaz(t::Float64) 
+    out = hEW(t, MLEEWGH[1], MLEEWGH[2], MLEEWGH[3])  
+    return out
+end
+
+function GGGHhaz(t::Float64) 
+    out = hGenGamma(t, MLEGGGH[1], MLEGGGH[2], MLEGGGH[3])  
+    return out
+end
+
+function GGHhaz(t::Float64) 
+    out = hGamma(t, MLEGGH[1], MLEGGH[2])  
+    return out
+end
+
+function LNGHhaz(t::Float64) 
+    out = hLogNormal(t, MLELNGH[1], MLELNGH[2])  
+    return out
+end
+
+function LLGHhaz(t::Float64) 
+    out = hLogNormal(t, MLELLGH[1], MLELLGH[2])  
+    return out
+end
 
 # Note that the baseline hazards associated to the top models look similar
 plot(t -> PGWGHhaz(t),
@@ -373,7 +396,7 @@ function pop_surv(t::Float64)
   beta = MLE[(3+p0):(2+p0+p1)]
   x_alpha = des_t * alpha
   x_dif = des * beta - x_alpha
-  out = mean(exp.(-cumhaz.(LogLogistic(theta1, theta2), t*exp.(x_alpha)).* exp.(x_dif)))
+  out = mean( exp.( - chLogLogistic(t*exp.(x_alpha), theta1, theta2).* exp.(x_dif)  )  )
   return out
 end
 
@@ -440,7 +463,7 @@ function ConfIntSurv(t0::Float64, level::Float64, nmc::Int64)
     mc = fill(0.0, nmc)
     function S_par(par::Vector{Float64})
         
-        outs = mean( exp.( - cumhaz.(LogLogistic(par[1], par[2]), t0.*exp.(des_t * par[3:(2+p0)])) .*
+        outs = mean( exp.( - chLogLogistic(t0.*exp.(des_t * par[3:(2+p0)]), par[1], par[2]) .*
                                         exp.( des * par[(3+p0):(2+p0+p1)].- des_t * par[3:(2+p0)])  )  )
                                         return outs
     end
@@ -452,8 +475,8 @@ function ConfIntSurv(t0::Float64, level::Float64, nmc::Int64)
       mc[i] = S_par(val1)
     end
     
-    L = Statistics.quantile(mc,(1-level)*0.5)
-    U = Statistics.quantile(mc,(1+level)*0.5)
+    L = quantile(mc,(1-level)*0.5)
+    U = quantile(mc,(1+level)*0.5)
     
     M = S_par(MLE)
     

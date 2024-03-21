@@ -61,9 +61,11 @@ using HazReg
 #= Fix the seed =#
 Random.seed!(123)
 #= True values of the parameters =#
-D = PowerGeneralizedWeibull(1,3,2) # sigma, nu, gamma
+sigma0 = 1
+nu0 = 3
+gamma0 = 2
 #= Simulation =#
-sim = rand(D,1000);
+sim = randPGW(1000, sigma0, nu0, gamma0);
 ```
 
 ## Some plots
@@ -72,7 +74,7 @@ sim = rand(D,1000);
 #= Histogram and probability density function =#
 histogram(sim, normalize=:pdf, color=:gray, 
           bins = range(0, 5, length=30), label = "")
-plot!(t -> pdf(D,t),
+plot!(t -> pdfPGW(t, sigma0, nu0, gamma0),
       xlabel = "x", ylabel = "Density", title = "PGW distribution",
     xlims = (0,5),   xticks = 0:1:5, label = "", 
     xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),
@@ -86,8 +88,14 @@ plot!(t -> pdf(D,t),
 #= Empirical CDF=#
 ecdfsim = ecdf(sim)
 
+#= ad hoc CDF =#
+function cdfPGW(t, sigma, nu, gamma) 
+        val = 1 .- ccdfPGW.(t, sigma, nu, gamma)
+        return val
+end
+
 plot(x -> ecdfsim(x), 0, 5, label = "ECDF", linecolor = "gray", linewidth=3)
-plot!(t -> cdf(D,t),
+plot!(t -> cdfPGW(t, sigma0, nu0, gamma0),
       xlabel = "x", ylabel = "CDF vs. ECDF", title = "PGW distribution",
     xlims = (0,5),   xticks = 0:1:5, label = "CDF", 
     xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),
@@ -98,7 +106,7 @@ plot!(t -> cdf(D,t),
 
 ```@example 1
 #= Hazard function =#
-plot(t -> haz(PowerGeneralizedWeibull(0.5, 2, 5),t),
+plot(t -> hPGW(t, 0.5, 2, 5),
       xlabel = "x", ylabel = "Hazard", title = "PGW distribution",
     xlims = (0,10),   xticks = 0:1:10, label = "", 
     xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),
