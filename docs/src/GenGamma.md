@@ -46,7 +46,116 @@ using Random
 using Plots
 using StatsBase
 using SpecialFunctions
-using HazReg
+```
+
+# Functions
+
+```@example 1
+#=
+Generalised Gamma (GG) Distribution: Hazard, cumulative hazard,
+probability density function, random number generation, and survival function
+=#
+
+
+#= Generalised Gamma (GG) probability density function.
+t: positive argument
+
+sigma: scale parameter
+
+nu: shape parameter
+
+gamma: shape parameter
+
+logd: log scale (true or false)
+=#
+
+function pdfGenGamma(t, sigma, nu, gamma, logd::Bool = false)
+    val = log(gamma) .- nu * log(sigma) .- loggamma(nu/gamma) .+ 
+    (nu - 1) * log.(t) .- (t/sigma).^gamma
+    if logd
+        return val
+    else
+        return exp.(val)
+    end
+end
+
+#= Generalised Gamma (GG) survival function.
+t: positive argument
+
+sigma: scale parameter
+
+nu: shape parameter
+
+gamma: shape parameter
+
+logp: log scale (true or false)
+=#
+
+function ccdfGenGamma(t, sigma, nu, gamma, logp::Bool = false)
+    tp = t.^gamma
+    val = logccdf.(Gamma(nu/gamma, sigma^gamma), tp)
+    if logp
+        return val
+    else
+        return exp.(val)
+    end
+end
+
+
+#= Generalised Gamma (GG) hazard function.
+t: positive argument
+
+sigma: scale parameter
+
+nu: shape parameter
+
+gamma: shape parameter
+
+logh: log scale (true or false)
+=#
+
+function hGenGamma(t, sigma, nu, gamma, logh::Bool = false)
+    lpdf0 = pdfGenGamma.(t, sigma, nu, gamma, true)
+    ls0 = ccdfGenGamma.(t, sigma, nu, gamma, true)
+    val = lpdf0 .- ls0
+    if logh
+        return val
+    else
+        return exp.(val)
+    end
+end
+
+#= Generalised Gamma (GG) cumulative hazard function.
+t: positive argument
+
+sigma: scale parameter
+
+nu: shape parameter
+
+gamma: shape parameter
+=#
+
+function chGenGamma(t, sigma, nu, gamma)
+    H0 = -ccdfGenGamma.(t, sigma, nu, gamma, true)
+    return H0
+end
+
+
+#= Generalised Gamma (GG) random number generation.
+n: number of observations
+
+sigma: scale parameter
+
+nu: shape parameter
+
+gamma: shape parameter
+=#
+
+function randGenGamma(n::Int, sigma, nu, gamma) 
+    p = rand(n)
+    out = quantile.(Gamma(nu/gamma, sigma^gamma), p).^(1/gamma)
+    return out
+end
 ```
 
 # Examples
@@ -57,9 +166,11 @@ using HazReg
 #= Fix the seed =#
 Random.seed!(123)
 #= True values of the parameters =#
-D = GeneralizedGamma(1,3,2) # sigma, nu, gamma
+sigma0 = 1
+nu0 = 3
+gamma0 = 2
 #= Simulation =#
-sim = rand(D,1000);
+sim = randGenGamma(1000, sigma0, nu0, gamma0);
 ```
 
 ## Some plots
@@ -68,7 +179,7 @@ sim = rand(D,1000);
 #= Histogram and probability density function =#
 histogram(sim, normalize=:pdf, color=:gray, 
           bins = range(0, 4, length=30), label = "")
-plot!(t -> pdf(D,t),
+plot!(t -> pdfGenGamma(t, sigma0, nu0, gamma0),
       xlabel = "x", ylabel = "Density", title = "GenGamma distribution",
     xlims = (0,4),   xticks = 0:1:4, label = "", 
     xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),
@@ -83,8 +194,14 @@ plot!(t -> pdf(D,t),
 #= Empirical CDF=#
 ecdfsim = ecdf(sim)
 
+#= ad hoc CDF =#
+function cdfGenGamma(t, sigma, nu, gamma) 
+val = 1 .- ccdfGenGamma.(t, sigma, nu, gamma)
+return val
+end
+
 plot(x -> ecdfsim(x), 0, 5, label = "ECDF", linecolor = "gray", linewidth=3)
-plot!(t -> cdf(D,t),
+plot!(t -> cdfGenGamma(t, sigma0, nu0, gamma0),
       xlabel = "x", ylabel = "CDF vs. ECDF", title = "GenGamma distribution",
       xlims = (0,5),   xticks = 0:1:5, label = "CDF", 
       xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),
@@ -94,7 +211,7 @@ plot!(t -> cdf(D,t),
 
 ```@example 1
 #= Hazard function =#
-plot(t -> haz(GeneralizedGamma(0.5, 1.5, 0.75),t),
+plot(t -> hGenGamma(t, 0.5, 1.5, 0.75),
      xlabel = "x", ylabel = "Hazard", title = "GenGamma distribution",
      xlims = (0,15),   xticks = 0:1:15, label = "", 
      xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),

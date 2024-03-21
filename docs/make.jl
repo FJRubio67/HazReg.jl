@@ -21,18 +21,6 @@ makedocs(;
         assets=String["assets/citations.css"],
         collapselevel=3,
     ),
-    pages=[
-        "Home" => "index.md",
-        "HazRegJulia.md",
-        "simGHJulia.md",
-        "Hazard-based distributions" => [
-            "EW.md",
-            "GenGamma.md",
-            "PGW.md",
-            "OtherHazards.md"
-        ],
-        "references.md",
-    ],
 )
 
 deploydocs(;

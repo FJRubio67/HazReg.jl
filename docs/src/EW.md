@@ -39,9 +39,11 @@ using HazReg
 #= Fix the seed =#
 Random.seed!(123)
 #= True values of the parameters =#
-D = ExponentiatedWeibull(1,3,2) # sigma, nu, gamma
+sigma0 = 1
+nu0 = 3
+gamma0 = 2
 #= Simulation =#
-sim = rand(D,1000);
+sim = randEW(1000, sigma0, nu0, gamma0);
 ```
 
 ## Some plots
@@ -50,7 +52,7 @@ sim = rand(D,1000);
 #= Histogram and probability density function =#
 histogram(sim, normalize=:pdf, color=:gray, 
           bins = range(0, 3, length=30), label = "")
-plot!(t -> pdf(D,t),
+plot!(t -> pdfEW(t, sigma0, nu0, gamma0),
       xlabel = "x", ylabel = "Density", title = "EW distribution",
     xlims = (0,3),   xticks = 0:1:3, label = "", 
     xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),
@@ -66,7 +68,7 @@ plot!(t -> pdf(D,t),
 ecdfsim = ecdf(sim)
 
 plot(x -> ecdfsim(x), 0, 3, label = "ECDF", linecolor = "gray", linewidth=3)
-plot!(t -> cdf(D,t),
+plot!(t -> cdfEW(t, sigma0, nu0, gamma0),
       xlabel = "x", ylabel = "CDF vs. ECDF", title = "EW distribution",
       xlims = (0,3),   xticks = 0:1:3, label = "CDF", 
       xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),
@@ -76,7 +78,7 @@ plot!(t -> cdf(D,t),
 
 ```@example 1
 #= Hazard function =#
-plot(t -> haz(ExponentiatedWeibull(0.25, 0.5, 5),t),
+plot(t -> hEW(t, 0.25, 0.5, 5),
      xlabel = "x", ylabel = "Hazard", title = "EW distribution",
      xlims = (0,10),   xticks = 0:1:10, label = "", 
      xtickfont = font(16, "Courier"),  ytickfont = font(16, "Courier"),
