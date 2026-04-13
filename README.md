@@ -1,6 +1,4 @@
-# HazReg.jl
-
-## Parametric Hazard-Based Regression Models for Survival Data
+# HazReg.jl: Parametric Hazard-Based Regression Models for Survival Data
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://FJRubio67.github.io/HazReg.jl/dev)
 [![Julia package](https://img.shields.io/badge/language-Julia-9558B2.svg)](https://julialang.org/)
