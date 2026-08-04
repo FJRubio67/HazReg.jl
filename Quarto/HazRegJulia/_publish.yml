@@ -1,0 +1,4 @@
+- source: HazRegJulia.qmd
+  quarto-pub:
+    - id: de7a0fae-91e7-4314-b9c1-92fb77d7bcdc
+      url: 'https://fjrubio.quarto.pub/hazregjulia'

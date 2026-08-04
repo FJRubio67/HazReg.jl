@@ -1,0 +1,4 @@
+- source: PGW.qmd
+  quarto-pub:
+    - id: a83daafa-204c-4ebe-bba3-9fb40725c9bc
+      url: 'https://fjrubio.quarto.pub/power-generalised-weibull-distribution'

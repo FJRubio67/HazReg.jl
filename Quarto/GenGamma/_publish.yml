@@ -1,0 +1,4 @@
+- source: GenGamma.qmd
+  quarto-pub:
+    - id: 97df4ef9-0e6d-4b69-bb54-ec3cf3069af2
+      url: 'https://fjrubio.quarto.pub/generalised-gamma-distribution'

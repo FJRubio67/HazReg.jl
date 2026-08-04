@@ -1,0 +1,4 @@
+- source: EW.qmd
+  quarto-pub:
+    - id: 92d1ca4b-197b-429a-8780-e46ff6cb2c3b
+      url: 'https://fjrubio.quarto.pub/exponentiated-weibull-distribution'

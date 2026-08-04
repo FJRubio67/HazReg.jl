@@ -1,0 +1,4 @@
+- source: simGH.qmd
+  quarto-pub:
+    - id: e96d42ff-de44-4c1d-ba4a-a1113ed80d78
+      url: 'https://fjrubio.quarto.pub/simghjulia'

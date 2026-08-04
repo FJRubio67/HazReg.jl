@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="F. Javier Rubio">
+<meta name="dcterms.date" content="2024-01-29">
+
+<title>HazReg.jl: Parametric Hazard-based regression models for survival data</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="HazRegJulia_files/libs/clipboard/clipboard.min.js"></script>
+<script src="HazRegJulia_files/libs/quarto-html/quarto.js"></script>
+<script src="HazRegJulia_files/libs/quarto-html/popper.min.js"></script>
+<script src="HazRegJulia_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="HazRegJulia_files/libs/quarto-html/anchor.min.js"></script>
+<link href="HazRegJulia_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="HazRegJulia_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="HazRegJulia_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="HazRegJulia_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="HazRegJulia_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#models" id="toc-models" class="nav-link active" data-scroll-target="#models"><span class="header-section-number">1</span> Models</a>
+  <ul class="collapse">
+  <li><a href="#general-hazard-model" id="toc-general-hazard-model" class="nav-link" data-scroll-target="#general-hazard-model"><span class="header-section-number">1.1</span> General Hazard model</a></li>
+  <li><a href="#accelerated-failure-time-aft-model" id="toc-accelerated-failure-time-aft-model" class="nav-link" data-scroll-target="#accelerated-failure-time-aft-model"><span class="header-section-number">1.2</span> Accelerated Failure Time (AFT) model</a></li>
+  <li><a href="#proportional-hazards-ph-model" id="toc-proportional-hazards-ph-model" class="nav-link" data-scroll-target="#proportional-hazards-ph-model"><span class="header-section-number">1.3</span> Proportional Hazards (PH) model</a></li>
+  <li><a href="#accelerated-hazards-ah-model" id="toc-accelerated-hazards-ah-model" class="nav-link" data-scroll-target="#accelerated-hazards-ah-model"><span class="header-section-number">1.4</span> Accelerated Hazards (AH) model</a></li>
+  </ul></li>
+  <li><a href="#available-baseline-hazards" id="toc-available-baseline-hazards" class="nav-link" data-scroll-target="#available-baseline-hazards"><span class="header-section-number">2</span> Available baseline hazards</a></li>
+  <li><a href="#illustrative-example-julia-code" id="toc-illustrative-example-julia-code" class="nav-link" data-scroll-target="#illustrative-example-julia-code"><span class="header-section-number">3</span> Illustrative example: Julia code</a>
+  <ul class="collapse">
+  <li><a href="#data-preparation" id="toc-data-preparation" class="nav-link" data-scroll-target="#data-preparation"><span class="header-section-number">3.1</span> Data preparation</a></li>
+  <li><a href="#model-fit-and-mles" id="toc-model-fit-and-mles" class="nav-link" data-scroll-target="#model-fit-and-mles"><span class="header-section-number">3.2</span> Model fit and MLEs</a></li>
+  <li><a href="#model-comparison" id="toc-model-comparison" class="nav-link" data-scroll-target="#model-comparison"><span class="header-section-number">3.3</span> Model Comparison</a></li>
+  <li><a href="#baseline-hazards-for-gh-models" id="toc-baseline-hazards-for-gh-models" class="nav-link" data-scroll-target="#baseline-hazards-for-gh-models"><span class="header-section-number">3.4</span> Baseline hazards for GH models</a></li>
+  <li><a href="#best-model-summaries" id="toc-best-model-summaries" class="nav-link" data-scroll-target="#best-model-summaries"><span class="header-section-number">3.5</span> Best-model summaries</a></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">HazReg.jl: Parametric Hazard-based regression models for survival data</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p><a href="https://sites.google.com/site/fjavierrubio67/">F. Javier Rubio</a> </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">January 29, 2024</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="models" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Models</h1>
+<p>The <code>HazReg.jl</code> Julia package implements the following parametric hazard-based regression models for (overall) survival data.</p>
+<ul>
+<li><p>General Hazard (GH) model <span class="citation" data-cites="chen:2001">(<a href="#ref-chen:2001" role="doc-biblioref">Chen and Jewell 2001</a>)</span> <span class="citation" data-cites="rubio:2019">(<a href="#ref-rubio:2019" role="doc-biblioref">Rubio et al. 2019</a>)</span>.</p></li>
+<li><p>Accelerated Failure Time (AFT) model <span class="citation" data-cites="kalbfleisch:2011">(<a href="#ref-kalbfleisch:2011" role="doc-biblioref">Kalbfleisch and Prentice 2011</a>)</span>.</p></li>
+<li><p>Proportional Hazards (PH) model <span class="citation" data-cites="cox:1972">(<a href="#ref-cox:1972" role="doc-biblioref">Cox 1972</a>)</span>.</p></li>
+<li><p>Accelerated Hazards (AH) model <span class="citation" data-cites="chen:2000">(<a href="#ref-chen:2000" role="doc-biblioref">Chen and Wang 2000</a>)</span>.</p></li>
+</ul>
+<p>These models are fitted using the Julia package <code>Optim</code> (methods included: “NM” (NelderMead), “N” (Newton), “LBFGS” (LBFGS), “CG” (ConjugateGradient), “GD” (GradientDescent)). Thus, the user needs to specify the initial points and to check the convergence of the optimisation step, as usual.</p>
+<p>A description of these hazard models is presented below as well as the available baseline hazards.</p>
+<section id="general-hazard-model" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="general-hazard-model"><span class="header-section-number">1.1</span> General Hazard model</h2>
+<p>The GH model is formulated in terms of the hazard structure</p>
+<p><span class="math display">\[
+h(t; \alpha, \beta, \theta, {\bf x}) = h_0\left(t  \exp\{\tilde{\bf x}^{\top}\alpha\}; \theta\right) \exp\{{\bf x}^{\top}\beta\}.
+\]</span></p>
+<p>where <span class="math inline">\({\bf x}\in{\mathbb R}^p\)</span> are the covariates that affect the hazard level; <span class="math inline">\(\tilde{\bf x} \in {\mathbb R}^q\)</span> are the covariates the affect the time level (typically <span class="math inline">\(\tilde{\bf x} \subset {\bf x}\)</span>); <span class="math inline">\(\alpha \in {\mathbb R}^q\)</span> and <span class="math inline">\(\beta \in {\mathbb R}^p\)</span> are the regression coefficients; and <span class="math inline">\(\theta \in \Theta\)</span> is the vector of parameters of the baseline hazard <span class="math inline">\(h_0(\cdot)\)</span>.</p>
+<p>This hazard structure leads to an identifiable model as long as the baseline hazard is not a hazard associated to a member of the Weibull family of distributions <span class="citation" data-cites="chen:2001">(<a href="#ref-chen:2001" role="doc-biblioref">Chen and Jewell 2001</a>)</span>.</p>
+</section>
+<section id="accelerated-failure-time-aft-model" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="accelerated-failure-time-aft-model"><span class="header-section-number">1.2</span> Accelerated Failure Time (AFT) model</h2>
+<p>The AFT model is formulated in terms of the hazard structure</p>
+<p><span class="math display">\[
+h(t; \beta, \theta, {\bf x}) = h_0\left(t  \exp\{{\bf x}^{\top}\beta\}; \theta\right) \exp\{{\bf x}^{\top}\beta\}.
+\]</span> where <span class="math inline">\({\bf x}\in{\mathbb R}^p\)</span> are the available covariates; <span class="math inline">\(\beta \in {\mathbb R}^p\)</span> are the regression coefficients; and <span class="math inline">\(\theta \in \Theta\)</span> is the vector of parameters of the baseline hazard <span class="math inline">\(h_0(\cdot)\)</span>.</p>
+</section>
+<section id="proportional-hazards-ph-model" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="proportional-hazards-ph-model"><span class="header-section-number">1.3</span> Proportional Hazards (PH) model</h2>
+<p>The PH model is formulated in terms of the hazard structure</p>
+<p><span class="math display">\[
+h(t; \beta, \theta, {\bf x}) = h_0\left(t ; \theta\right) \exp\{{\bf x}^{\top}\beta\}.
+\]</span></p>
+<p>where <span class="math inline">\({\bf x}\in{\mathbb R}^p\)</span> are the available covariates; <span class="math inline">\(\beta \in {\mathbb R}^p\)</span> are the regression coefficients; and <span class="math inline">\(\theta \in \Theta\)</span> is the vector of parameters of the baseline hazard <span class="math inline">\(h_0(\cdot)\)</span>.</p>
+</section>
+<section id="accelerated-hazards-ah-model" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="accelerated-hazards-ah-model"><span class="header-section-number">1.4</span> Accelerated Hazards (AH) model</h2>
+<p>The AH model is formulated in terms of the hazard structure</p>
+<p><span class="math display">\[
+h(t; \alpha, \theta, \tilde{\bf x}) = h_0\left(t \exp\{\tilde{\bf x}^{\top}\alpha\}; \theta\right) .
+\]</span></p>
+<p>where <span class="math inline">\(\tilde{\bf x}\in{\mathbb R}^q\)</span> are the available covariates; <span class="math inline">\(\alpha \in {\mathbb R}^q\)</span> are the regression coefficients; and <span class="math inline">\(\theta \in \Theta\)</span> is the vector of parameters of the baseline hazard <span class="math inline">\(h_0(\cdot)\)</span>.</p>
+</section>
+</section>
+<section id="available-baseline-hazards" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Available baseline hazards</h1>
+<p>The current version of the <code>HazReg.jl</code> Julia package implements the following parametric baseline hazards for the models discussed in the previous section.</p>
+<ul>
+<li><p><a href="http://rpubs.com/FJRubio/PGW">Power Generalised Weibull</a> (<code>PGW</code>) distribution.</p></li>
+<li><p><a href="http://rpubs.com/FJRubio/EWD">Exponentiated Weibull</a> (<code>EW</code>) distribution.</p></li>
+<li><p><a href="http://rpubs.com/FJRubio/GG">Generalised Gamma</a> (<code>GenGamma</code>) distribution.</p></li>
+<li><p><a href="https://en.wikipedia.org/wiki/Gamma_distribution">Gamma</a> (<code>Gamma</code>) distribution.</p></li>
+<li><p><a href="https://en.wikipedia.org/wiki/Log-normal_distribution">Lognormal</a> (<code>LogNormal</code>) distribution.</p></li>
+<li><p><a href="https://en.wikipedia.org/wiki/Log-logistic_distribution">Log-logistic</a> (<code>LogLogistic</code>) distribution.</p></li>
+<li><p><a href="https://en.wikipedia.org/wiki/Weibull_distribution">Weibull</a> (<code>Weibull</code>) distribution. (only for AFT, PH, and AH models)</p></li>
+</ul>
+<p>All positive parameters are transformed into the real line using a <code>log</code> link (reparameterisation).</p>
+</section>
+<section id="illustrative-example-julia-code" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Illustrative example: Julia code</h1>
+<p>In this example, we analyse the <code>LeukSurv</code> data set from the R package <code>spBayesSurv</code>. This data set contains information about the survival of acute myeloid leukemia in 1,043 patients.</p>
+<p>For the GH model, we consider the hazard level covariates (<span class="math inline">\({\bf x}\)</span>) age (standardised), sex, wbc (white blood cell count at diagnosis, standardised), and tpi (the Townsend score, standardised); and the time level covariates (<span class="math inline">\({\bf x}\)</span>) age (standardised), wbc (white blood cell count at diagnosis, standardised), and tpi (the Townsend score, standardised). For the PH, AFT, and AH models, we consider the covariates age (standardised), sex, wbc (white blood cell count at diagnosis, standardised), and tpi (the Townsend score, standardised).</p>
+<p>For illustration, we fit the 4 models with both (3-parameter) PGW and (2-parameter) LL baseline hazard. In addition, we fit the GH model with <code>GenGamma</code>, <code>EW</code>, <code>LogNormal</code>, <code>LogLogistic</code>, and <code>Gamma</code> baseline hazards. We compare these models in terms of AIC (BIC can be used as well). We summarise the best selected model with the available tools in this package.</p>
+<p>See also:</p>
+<ul>
+<li><p><a href="https://github.com/FJRubio67/HazReg.jl">HazReg.jl Julia Package</a></p></li>
+<li><p><a href="https://github.com/FJRubio67/GHSurv">HazReg</a>, for an R implementation.</p></li>
+</ul>
+<section id="data-preparation" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="data-preparation"><span class="header-section-number">3.1</span> Data preparation</h2>
+<div class="cell" data-execution_count="1">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Distributions</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Random</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">StatsBase</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Optim</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">LinearAlgebra</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">SpecialFunctions</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">ForwardDiff</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">HazReg</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Plots</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">PrettyTables</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">DataFrames</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">NamedArrays</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">CSV</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Survival</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co">#= Data =#</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> CSV.<span class="fu">File</span>(<span class="st">"LeukSurv.csv"</span>);</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co">#= Design matrix for hazard level effects =#</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>des <span class="op">=</span> <span class="fu">hcat</span>( <span class="fu">standardise</span>(df.age), df.sex, <span class="fu">standardise</span>(df.wbc), <span class="fu">standardise</span>(df.tpi) );</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co">#= Design matrix for time level effects =#</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>des_t <span class="op">=</span> <span class="fu">hcat</span>( <span class="fu">standardise</span>(df.age), <span class="fu">standardise</span>(df.wbc), <span class="fu">standardise</span>(df.tpi) );</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co">#= Vital status =#</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>status <span class="op">=</span> <span class="fu">collect</span>(<span class="dt">Bool</span>,(df.cens));</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co">#= Survival times =#</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>times <span class="op">=</span> df.time<span class="op">/</span><span class="fl">365.25</span> ;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="model-fit-and-mles" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="model-fit-and-mles"><span class="header-section-number">3.2</span> Model fit and MLEs</h2>
+<div class="cell" data-execution_count="2">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># PGWGH</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>OPTPGWGH <span class="op">=</span> <span class="fu">GHMLE</span>(init <span class="op">=</span> <span class="fu">fill</span>(<span class="fl">0.0</span>, <span class="fl">3</span> <span class="op">+</span> <span class="fu">size</span>(des_t)[<span class="fl">2</span>] <span class="op">+</span> <span class="fu">size</span>(des)[<span class="fl">2</span>]), times <span class="op">=</span> times,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>            status <span class="op">=</span> status, hstr <span class="op">=</span> <span class="st">"GH"</span>, dist <span class="op">=</span> <span class="st">"PGW"</span>, </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>            des <span class="op">=</span> des, des_t <span class="op">=</span> des_t, method <span class="op">=</span> <span class="st">"NM"</span>, maxit <span class="op">=</span> <span class="fl">1000</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># PGWAFT</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>OPTPGWAFT <span class="op">=</span> <span class="fu">GHMLE</span>(init <span class="op">=</span> <span class="fu">fill</span>(<span class="fl">0.0</span>, <span class="fl">3</span> <span class="op">+</span> <span class="fu">size</span>(des)[<span class="fl">2</span>]), times <span class="op">=</span> times, </span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>                  status <span class="op">=</span> status, hstr <span class="op">=</span> <span class="st">"AFT"</span>, dist <span class="op">=</span> <span class="st">"PGW"</span>, </span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>                  des <span class="op">=</span> des, des_t <span class="op">=</span> <span class="cn">nothing</span>, method <span class="op">=</span> <span class="st">"NM"</span>, maxit <span class="op">=</span> <span class="fl">1000</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># PGWPH</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>OPTPGWPH <span class="op">=</span> <span class="fu">GHMLE</span>(init <span class="op">=</span> <span class="fu">fill</span>(<span class="fl">0.0</span>, <span class="fl">3</span> <span class="fu">+size</span>(des)[<span class="fl">2</span>]), times <span class="op">=</span> times, </span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>                 status <span class="op">=</span> status, hstr <span class="op">=</span> <span class="st">"PH"</span>, dist <span class="op">=</span> <span class="st">"PGW"</span>, </span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>                 des <span class="op">=</span> des, des_t <span class="op">=</span> <span class="cn">nothing</span>, method <span class="op">=</span> <span class="st">"NM"</span>, maxit <span class="op">=</span> <span class="fl">1000</span>)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># PGWAH</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>OPTPGWAH <span class="op">=</span> <span class="fu">GHMLE</span>(init <span class="op">=</span> <span class="fu">fill</span>(<span class="fl">0.0</span>, <span class="fl">3</span> <span class="op">+</span> <span class="fu">size</span>(des_t)[<span class="fl">2</span>] ), times <span class="op">=</span> times, </span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>                 status <span class="op">=</span> status, hstr <span class="op">=</span> <span class="st">"AH"</span>, dist <span class="op">=</span> <span class="st">"PGW"</span>, </span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>                 des_t <span class="op">=</span> des_t, des <span class="op">=</span> <span class="cn">nothing</span>, method <span class="op">=</span> <span class="st">"NM"</span>, maxit <span class="op">=</span> <span class="fl">1000</span>)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co"># LLGH</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>OPTLLGH <span class="op">=</span> <span class="fu">GHMLE</span>(init <span class="op">=</span> <span class="fu">fill</span>(<span class="fl">0.0</span>, <span class="fl">2</span> <span class="op">+</span> <span class="fu">size</span>(des_t)[<span class="fl">2</span>] <span class="op">+</span> <span class="fu">size</span>(des)[<span class="fl">2</span>]), times <span class="op">=</span> times,</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>                status <span class="op">=</span> status, hstr <span class="op">=</span> <span class="st">"GH"</span>, dist <span class="op">=</span> <span class="st">"LogLogistic"</span>, </span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>                des <span class="op">=</span> des, des_t <span class="op">=</span> des_t, method <span class="op">=</span> <span class="st">"NM"</span>, maxit <span class="op">=</span> <span class="fl">1000</span>)</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co"># LLAFT</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>OPTLLAFT <span class="op">=</span> <span class="fu">GHMLE</span>(init <span class="op">=</span> <span class="fu">fill</span>(<span class="fl">0.0</span>, <span class="fl">2</span> <span class="op">+</span> <span class="fu">size</span>(des)[<span class="fl">2</span>]), times <span class="op">=</span> times, </span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>                  status <span class="op">=</span> status, hstr <span class="op">=</span> <span class="st">"AFT"</span>, dist <span class="op">=</span> <span class="st">"LogLogistic"</span>, </span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>                  des <span class="op">=</span> des, des_t <span class="op">=</span> <span class="cn">nothing</span>, method <span class="op">=</span> <span class="st">"NM"</span>, maxit <span class="op">=</span> <span class="fl">1000</span>)</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="co"># LLPH</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>OPTLLPH <span class="op">=</span> <span class="fu">GHMLE</span>(init <span class="op">=</span> <span class="fu">fill</span>(<span class="fl">0.0</span>, <span class="fl">2</span> <span class="op">+</span> <span class="fu">size</span>(des)[<span class="fl">2</span>]), times <span class="op">=</span> times, </span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>                status <span class="op">=</span> status, hstr <span class="op">=</span> <span class="st">"PH"</span>, dist <span class="op">=</span> <span class="st">"LogLogistic"</span>, </span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>                des <span class="op">=</span> des, des_t <span class="op">=</span> <span class="cn">nothing</span>, method <span class="op">=</span> <span class="st">"NM"</span>, maxit <span class="op">=</span> <span class="fl">1000</span>)</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="co"># LLAH</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>OPTLLAH <span class="op">=</span> <span class="fu">GHMLE</span>(init <span class="op">=</span> <span class="fu">fill</span>(<span class="fl">0.0</span>, <span class="fl">2</span> <span class="op">+</span> <span class="fu">size</span>(des_t)[<span class="fl">2</span>]), times <span class="op">=</span> times, </span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>                status <span class="op">=</span> status, hstr <span class="op">=</span> <span class="st">"AH"</span>, dist <span class="op">=</span> <span class="st">"LogLogistic"</span>, </span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>                des <span class="op">=</span> <span class="cn">nothing</span>, des_t <span class="op">=</span> des_t, method <span class="op">=</span> <span class="st">"NM"</span>, maxit <span class="op">=</span> <span class="fl">1000</span>)</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="co"># EWGH</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>OPTEWGH <span class="op">=</span> <span class="fu">GHMLE</span>(init <span class="op">=</span> <span class="fu">fill</span>(<span class="fl">0.0</span>, <span class="fl">3</span> <span class="op">+</span> <span class="fu">size</span>(des_t)[<span class="fl">2</span>] <span class="op">+</span> <span class="fu">size</span>(des)[<span class="fl">2</span>]), times <span class="op">=</span> times, </span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>                status <span class="op">=</span> status, hstr <span class="op">=</span> <span class="st">"GH"</span>, dist <span class="op">=</span> <span class="st">"EW"</span>, </span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>                des <span class="op">=</span> des, des_t <span class="op">=</span> des_t, method <span class="op">=</span> <span class="st">"NM"</span>, maxit <span class="op">=</span> <span class="fl">1000</span>)</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="co"># GGGH</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>OPTGGGH <span class="op">=</span> <span class="fu">GHMLE</span>(init <span class="op">=</span> <span class="fu">fill</span>(<span class="fl">0.0</span>, <span class="fl">3</span> <span class="op">+</span> <span class="fu">size</span>(des_t)[<span class="fl">2</span>] <span class="op">+</span> <span class="fu">size</span>(des)[<span class="fl">2</span>]), times <span class="op">=</span> times,                  status <span class="op">=</span> status, hstr <span class="op">=</span> <span class="st">"GH"</span>, dist <span class="op">=</span> <span class="st">"GenGamma"</span>,</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>                des <span class="op">=</span> des, des_t <span class="op">=</span> des_t, method <span class="op">=</span> <span class="st">"NM"</span>, maxit <span class="op">=</span> <span class="fl">1000</span>)</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="co"># LNGH</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>OPTLNGH <span class="op">=</span> <span class="fu">GHMLE</span>(init <span class="op">=</span> <span class="fu">fill</span>(<span class="fl">0.0</span>, <span class="fl">2</span> <span class="op">+</span> <span class="fu">size</span>(des_t)[<span class="fl">2</span>] <span class="op">+</span> <span class="fu">size</span>(des)[<span class="fl">2</span>]), times <span class="op">=</span> times, </span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>                status <span class="op">=</span> status, hstr <span class="op">=</span> <span class="st">"GH"</span>, dist <span class="op">=</span> <span class="st">"LogNormal"</span>, </span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>                des <span class="op">=</span> des, des_t <span class="op">=</span> des_t, method <span class="op">=</span> <span class="st">"NM"</span>, maxit <span class="op">=</span> <span class="fl">1000</span>)</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="co"># GGH</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>OPTGGH <span class="op">=</span> <span class="fu">GHMLE</span>(init <span class="op">=</span> <span class="fu">fill</span>(<span class="fl">0.0</span>, <span class="fl">2</span> <span class="op">+</span> <span class="fu">size</span>(des_t)[<span class="fl">2</span>] <span class="op">+</span> <span class="fu">size</span>(des)[<span class="fl">2</span>]), times <span class="op">=</span> times, </span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>               status <span class="op">=</span> status, hstr <span class="op">=</span> <span class="st">"GH"</span>, dist <span class="op">=</span> <span class="st">"Gamma"</span>, </span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>               des <span class="op">=</span> des, des_t <span class="op">=</span> des_t, method <span class="op">=</span> <span class="st">"N"</span>, maxit <span class="op">=</span> <span class="fl">1000</span>)</span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="co"># MLEs in the original parameterisations</span></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>MLEPGWGH <span class="op">=</span> [<span class="fu">exp</span>(OPTPGWGH[<span class="fl">1</span>].minimizer[j]) for j <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>] </span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="fu">append!</span>(MLEPGWGH, OPTPGWGH[<span class="fl">1</span>].minimizer[<span class="fl">4</span><span class="op">:</span><span class="kw">end</span>]) </span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>MLEEWGH <span class="op">=</span> [<span class="fu">exp</span>(OPTEWGH[<span class="fl">1</span>].minimizer[j]) for j <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>] </span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="fu">append!</span>(MLEEWGH, OPTEWGH[<span class="fl">1</span>].minimizer[<span class="fl">4</span><span class="op">:</span><span class="kw">end</span>]) </span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>MLEEWGH <span class="op">=</span> [<span class="fu">exp</span>(OPTEWGH[<span class="fl">1</span>].minimizer[j]) for j <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>] </span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="fu">append!</span>(MLEEWGH, OPTEWGH[<span class="fl">1</span>].minimizer[<span class="fl">4</span><span class="op">:</span><span class="kw">end</span>]) </span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>MLEGGGH <span class="op">=</span> [<span class="fu">exp</span>(OPTGGGH[<span class="fl">1</span>].minimizer[j]) for j <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>] </span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="fu">append!</span>(MLEGGGH, OPTGGGH[<span class="fl">1</span>].minimizer[<span class="fl">4</span><span class="op">:</span><span class="kw">end</span>]) </span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>MLEGGH <span class="op">=</span> [<span class="fu">exp</span>(OPTGGH[<span class="fl">1</span>].minimizer[j]) for j <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">2</span>] </span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a><span class="fu">append!</span>(MLEGGH, OPTGGH[<span class="fl">1</span>].minimizer[<span class="fl">3</span><span class="op">:</span><span class="kw">end</span>]) </span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>MLELNGH <span class="op">=</span> [OPTLNGH[<span class="fl">1</span>].minimizer[<span class="fl">1</span>], <span class="fu">exp</span>(OPTLNGH[<span class="fl">1</span>].minimizer[<span class="fl">2</span>]), OPTLNGH[<span class="fl">1</span>].minimizer[<span class="fl">3</span><span class="op">:</span><span class="kw">end</span>]<span class="op">...</span>]</span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>MLELLGH <span class="op">=</span> [OPTLLGH[<span class="fl">1</span>].minimizer[<span class="fl">1</span>], <span class="fu">exp</span>(OPTLLGH[<span class="fl">1</span>].minimizer[<span class="fl">2</span>]), OPTLLGH[<span class="fl">1</span>].minimizer[<span class="fl">3</span><span class="op">:</span><span class="kw">end</span>]<span class="op">...</span>]</span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>MLES <span class="op">=</span> <span class="fu">hcat</span>(MLEPGWGH, MLEEWGH, MLEGGGH, [MLEGGH[<span class="fl">1</span>], MLEGGH[<span class="fl">2</span>], <span class="cn">nothing</span>, MLEGGH[<span class="fl">3</span><span class="op">:</span><span class="kw">end</span>]<span class="op">...</span>],</span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>            [MLELNGH[<span class="fl">1</span>], MLELNGH[<span class="fl">2</span>], <span class="cn">nothing</span>, MLELNGH[<span class="fl">3</span><span class="op">:</span><span class="kw">end</span>]<span class="op">...</span>],[MLELLGH[<span class="fl">1</span>], MLELLGH[<span class="fl">2</span>], <span class="cn">nothing</span>, MLELLGH[<span class="fl">3</span><span class="op">:</span><span class="kw">end</span>]<span class="op">...</span>])</span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>MLES <span class="op">=</span> <span class="fu">DataFrame</span>(MLES, <span class="op">:</span>auto)</span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a><span class="fu">rename!</span>( MLES, [<span class="st">"PGWGH"</span>, <span class="st">"EWGH"</span>, <span class="st">"GGGH"</span>, <span class="st">"GGH"</span>, <span class="st">"LNGH"</span>, <span class="st">"LLGH"</span>] )</span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="co"># MLEs for GH models</span></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="fu">println</span>(MLES)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>10×6 DataFrame
+ Row │ PGWGH      EWGH       GGGH        GGH         LNGH       LLGH      
+     │ Union…     Union…     Union…      Union…      Union…     Union…    
+─────┼────────────────────────────────────────────────────────────────────
+   1 │ 0.0950152  0.0106152  0.00658277  0.48821     -0.729543  -0.718369
+   2 │ 1.00611    0.232759   1.06396     4.11739     1.98069    1.12585
+   3 │ 3.47407    7.64616    0.282329                                     
+   4 │ 0.91133    0.868762   1.22694     -0.800448   0.852858   0.828229
+   5 │ 0.897534   0.925936   1.19993     -0.510837   0.788362   0.740527
+   6 │ 0.413299   0.44666    0.862072    -0.592114   0.369539   0.41986
+   7 │ 0.978584   0.956015   1.09682     0.338275    0.95762    0.948681
+   8 │ 0.077424   0.0745275  0.0760824   0.147894    0.0743278  0.0720056
+   9 │ 0.681224   0.69978    0.80311     0.00433901  0.630381   0.609399
+  10 │ 0.302625   0.319423   0.494054    -0.115218   0.286803   0.31509</code></pre>
+</div>
+</div>
+</section>
+<section id="model-comparison" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="model-comparison"><span class="header-section-number">3.3</span> Model Comparison</h2>
+<div class="cell" data-execution_count="3">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># AIC for models with PGW baseline hazard</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>AICPGWGH <span class="op">=</span> <span class="fl">2</span><span class="op">*</span>OPTPGWGH[<span class="fl">1</span>].minimum <span class="op">+</span> <span class="fl">2</span><span class="fu">*length</span>(OPTPGWGH[<span class="fl">1</span>].minimizer)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>AICPGWAFT <span class="op">=</span> <span class="fl">2</span><span class="op">*</span>OPTPGWAFT[<span class="fl">1</span>].minimum <span class="op">+</span> <span class="fl">2</span><span class="fu">*length</span>(OPTPGWAFT[<span class="fl">1</span>].minimizer)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>AICPGWPH <span class="op">=</span> <span class="fl">2</span><span class="op">*</span>OPTPGWPH[<span class="fl">1</span>].minimum <span class="op">+</span> <span class="fl">2</span><span class="fu">*length</span>(OPTPGWPH[<span class="fl">1</span>].minimizer)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>AICPGWAH <span class="op">=</span> <span class="fl">2</span><span class="op">*</span>OPTPGWAH[<span class="fl">1</span>].minimum <span class="op">+</span> <span class="fl">2</span><span class="fu">*length</span>(OPTPGWAH[<span class="fl">1</span>].minimizer)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># AICs for models with LL baseline hazard</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>AICLLGH <span class="op">=</span> <span class="fl">2</span><span class="op">*</span>OPTLLGH[<span class="fl">1</span>].minimum <span class="op">+</span> <span class="fl">2</span><span class="fu">*length</span>(OPTLLGH[<span class="fl">1</span>].minimizer)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>AICLLAFT <span class="op">=</span> <span class="fl">2</span><span class="op">*</span>OPTLLAFT[<span class="fl">1</span>].minimum <span class="op">+</span> <span class="fl">2</span><span class="fu">*length</span>(OPTLLAFT[<span class="fl">1</span>].minimizer)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>AICLLPH <span class="op">=</span> <span class="fl">2</span><span class="op">*</span>OPTLLPH[<span class="fl">1</span>].minimum <span class="op">+</span> <span class="fl">2</span><span class="fu">*length</span>(OPTLLPH[<span class="fl">1</span>].minimizer)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>AICLLAH <span class="op">=</span> <span class="fl">2</span><span class="op">*</span>OPTLLAH[<span class="fl">1</span>].minimum <span class="op">+</span> <span class="fl">2</span><span class="fu">*length</span>(OPTLLAH[<span class="fl">1</span>].minimizer)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># AICs for GH models with GG, EW, LN, and G hazards</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>AICGGGH <span class="op">=</span> <span class="fl">2</span><span class="op">*</span>OPTGGGH[<span class="fl">1</span>].minimum <span class="op">+</span> <span class="fl">2</span><span class="fu">*length</span>(OPTGGGH[<span class="fl">1</span>].minimizer)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>AICEWGH <span class="op">=</span> <span class="fl">2</span><span class="op">*</span>OPTEWGH[<span class="fl">1</span>].minimum <span class="op">+</span> <span class="fl">2</span><span class="fu">*length</span>(OPTEWGH[<span class="fl">1</span>].minimizer)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>AICLNGH <span class="op">=</span> <span class="fl">2</span><span class="op">*</span>OPTLNGH[<span class="fl">1</span>].minimum <span class="op">+</span> <span class="fl">2</span><span class="fu">*length</span>(OPTLNGH[<span class="fl">1</span>].minimizer)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>AICGGH <span class="op">=</span> <span class="fl">2</span><span class="op">*</span>OPTGGH[<span class="fl">1</span>].minimum <span class="op">+</span> <span class="fl">2</span><span class="fu">*length</span>(OPTGGH[<span class="fl">1</span>].minimizer)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co"># All AICs</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>AICs <span class="op">=</span> [AICPGWGH, AICPGWAFT, AICPGWPH, AICPGWAH,</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>          AICLLGH, AICLLAFT, AICLLPH, AICLLAH,</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>          AICGGGH, AICEWGH, AICLNGH, AICGGH]</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="fu">println</span>(AICs)</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Best model: LLGH</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="fu">argmin</span>(AICs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1537.1904839778242, 1539.43006952374, 1586.4352749290651, 1627.5425264516907, 1527.3620024670893, 1529.328819881987, 1580.5159233440302, 1672.4640359064224, 1554.6674846756873, 1534.05811185893, 1533.6282300060163, 1705.9109039251707]</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="13">
+<pre><code>5</code></pre>
+</div>
+</div>
+</section>
+<section id="baseline-hazards-for-gh-models" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="baseline-hazards-for-gh-models"><span class="header-section-number">3.4</span> Baseline hazards for GH models</h2>
+<div class="cell" data-execution_count="4">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fitted baseline hazard functions for GH models</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">PGWGHhaz</span>(t<span class="op">::</span><span class="dt">Float64</span>) </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> <span class="fu">hPGW</span>(t, MLEPGWGH[<span class="fl">1</span>], MLEPGWGH[<span class="fl">2</span>], MLEPGWGH[<span class="fl">3</span>])  </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">EWGHhaz</span>(t<span class="op">::</span><span class="dt">Float64</span>) </span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> <span class="fu">hEW</span>(t, MLEEWGH[<span class="fl">1</span>], MLEEWGH[<span class="fl">2</span>], MLEEWGH[<span class="fl">3</span>])  </span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">GGGHhaz</span>(t<span class="op">::</span><span class="dt">Float64</span>) </span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> <span class="fu">hGenGamma</span>(t, MLEGGGH[<span class="fl">1</span>], MLEGGGH[<span class="fl">2</span>], MLEGGGH[<span class="fl">3</span>])  </span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">GGHhaz</span>(t<span class="op">::</span><span class="dt">Float64</span>) </span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> <span class="fu">hGamma</span>(t, MLEGGH[<span class="fl">1</span>], MLEGGH[<span class="fl">2</span>])  </span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">LNGHhaz</span>(t<span class="op">::</span><span class="dt">Float64</span>) </span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> <span class="fu">hLogNormal</span>(t, MLELNGH[<span class="fl">1</span>], MLELNGH[<span class="fl">2</span>])  </span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">LLGHhaz</span>(t<span class="op">::</span><span class="dt">Float64</span>) </span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> <span class="fu">hLogNormal</span>(t, MLELLGH[<span class="fl">1</span>], MLELLGH[<span class="fl">2</span>])  </span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Note that the baseline hazards associated to the top models look similar</span></span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(t <span class="op">-&gt;</span> <span class="fu">PGWGHhaz</span>(t),</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>      xlabel <span class="op">=</span> <span class="st">"Time (years)"</span>, ylabel <span class="op">=</span> <span class="st">"Baseline Hazard"</span>, title <span class="op">=</span> <span class="st">""</span>,</span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>    xlims <span class="op">=</span> (<span class="fl">0.0001</span>,<span class="fu">maximum</span>(times)),   xticks <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">1</span><span class="op">:</span><span class="fu">maximum</span>(times), label <span class="op">=</span> <span class="st">""</span>, </span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>    xtickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),  ytickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),</span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>    xguidefontsize<span class="op">=</span><span class="fl">18</span>, yguidefontsize<span class="op">=</span><span class="fl">18</span>, linewidth<span class="op">=</span><span class="fl">3</span>,</span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>    linecolor <span class="op">=</span> <span class="st">"blue"</span>, ylims <span class="op">=</span> (<span class="fl">0</span>,<span class="fl">4</span>))</span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a><span class="fu">plot!</span>(t <span class="op">-&gt;</span> <span class="fu">EWGHhaz</span>(t),</span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a>   xlabel <span class="op">=</span> <span class="st">"Time (years)"</span>, ylabel <span class="op">=</span> <span class="st">"Baseline Hazard"</span>, title <span class="op">=</span> <span class="st">""</span>,</span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>  xlims <span class="op">=</span> (<span class="fl">0.0001</span>,<span class="fu">maximum</span>(times)),   xticks <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">1</span><span class="op">:</span><span class="fu">maximum</span>(times), label <span class="op">=</span> <span class="st">""</span>, </span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a>  xtickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),  ytickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),</span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a>  xguidefontsize<span class="op">=</span><span class="fl">18</span>, yguidefontsize<span class="op">=</span><span class="fl">18</span>, linewidth<span class="op">=</span><span class="fl">3</span>,</span>
+<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a>  linecolor <span class="op">=</span> <span class="st">"blue"</span>, ylims <span class="op">=</span> (<span class="fl">0</span>,<span class="fl">4</span>), linestyle<span class="op">=:</span>dash)</span>
+<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-47"><a href="#cb7-47" aria-hidden="true" tabindex="-1"></a><span class="fu">plot!</span>(t <span class="op">-&gt;</span> <span class="fu">GGGHhaz</span>(t),</span>
+<span id="cb7-48"><a href="#cb7-48" aria-hidden="true" tabindex="-1"></a>   xlabel <span class="op">=</span> <span class="st">"Time (years)"</span>, ylabel <span class="op">=</span> <span class="st">"Baseline Hazard"</span>, title <span class="op">=</span> <span class="st">""</span>,</span>
+<span id="cb7-49"><a href="#cb7-49" aria-hidden="true" tabindex="-1"></a>  xlims <span class="op">=</span> (<span class="fl">0.0001</span>,<span class="fu">maximum</span>(times)),   xticks <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">1</span><span class="op">:</span><span class="fu">maximum</span>(times), label <span class="op">=</span> <span class="st">""</span>, </span>
+<span id="cb7-50"><a href="#cb7-50" aria-hidden="true" tabindex="-1"></a>  xtickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),  ytickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),</span>
+<span id="cb7-51"><a href="#cb7-51" aria-hidden="true" tabindex="-1"></a>  xguidefontsize<span class="op">=</span><span class="fl">18</span>, yguidefontsize<span class="op">=</span><span class="fl">18</span>, linewidth<span class="op">=</span><span class="fl">3</span>,</span>
+<span id="cb7-52"><a href="#cb7-52" aria-hidden="true" tabindex="-1"></a>  linecolor <span class="op">=</span> <span class="st">"blue"</span>, ylims <span class="op">=</span> (<span class="fl">0</span>,<span class="fl">4</span>), linestyle<span class="op">=:</span>dot)</span>
+<span id="cb7-53"><a href="#cb7-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-54"><a href="#cb7-54" aria-hidden="true" tabindex="-1"></a><span class="fu">plot!</span>(t <span class="op">-&gt;</span> <span class="fu">GGHhaz</span>(t),</span>
+<span id="cb7-55"><a href="#cb7-55" aria-hidden="true" tabindex="-1"></a>   xlabel <span class="op">=</span> <span class="st">"Time (years)"</span>, ylabel <span class="op">=</span> <span class="st">"Baseline Hazard"</span>, title <span class="op">=</span> <span class="st">""</span>,</span>
+<span id="cb7-56"><a href="#cb7-56" aria-hidden="true" tabindex="-1"></a>  xlims <span class="op">=</span> (<span class="fl">0.0001</span>,<span class="fu">maximum</span>(times)),   xticks <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">1</span><span class="op">:</span><span class="fu">maximum</span>(times), label <span class="op">=</span> <span class="st">""</span>, </span>
+<span id="cb7-57"><a href="#cb7-57" aria-hidden="true" tabindex="-1"></a>  xtickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),  ytickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),</span>
+<span id="cb7-58"><a href="#cb7-58" aria-hidden="true" tabindex="-1"></a>  xguidefontsize<span class="op">=</span><span class="fl">18</span>, yguidefontsize<span class="op">=</span><span class="fl">18</span>, linewidth<span class="op">=</span><span class="fl">3</span>,</span>
+<span id="cb7-59"><a href="#cb7-59" aria-hidden="true" tabindex="-1"></a>  linecolor <span class="op">=</span> <span class="st">"blue"</span>, ylims <span class="op">=</span> (<span class="fl">0</span>,<span class="fl">4</span>), linestyle<span class="op">=:</span>dashdot)</span>
+<span id="cb7-60"><a href="#cb7-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-61"><a href="#cb7-61" aria-hidden="true" tabindex="-1"></a><span class="fu">plot!</span>(t <span class="op">-&gt;</span> <span class="fu">LNGHhaz</span>(t),</span>
+<span id="cb7-62"><a href="#cb7-62" aria-hidden="true" tabindex="-1"></a>      xlabel <span class="op">=</span> <span class="st">"Time (years)"</span>, ylabel <span class="op">=</span> <span class="st">"Baseline Hazard"</span>, title <span class="op">=</span> <span class="st">""</span>,</span>
+<span id="cb7-63"><a href="#cb7-63" aria-hidden="true" tabindex="-1"></a>    xlims <span class="op">=</span> (<span class="fl">0.0001</span>,<span class="fu">maximum</span>(times)),   xticks <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">1</span><span class="op">:</span><span class="fu">maximum</span>(times), label <span class="op">=</span> <span class="st">""</span>, </span>
+<span id="cb7-64"><a href="#cb7-64" aria-hidden="true" tabindex="-1"></a>    xtickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),  ytickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),</span>
+<span id="cb7-65"><a href="#cb7-65" aria-hidden="true" tabindex="-1"></a>    xguidefontsize<span class="op">=</span><span class="fl">18</span>, yguidefontsize<span class="op">=</span><span class="fl">18</span>, linewidth<span class="op">=</span><span class="fl">3</span>,</span>
+<span id="cb7-66"><a href="#cb7-66" aria-hidden="true" tabindex="-1"></a>    linecolor <span class="op">=</span> <span class="st">"blue"</span>, ylims <span class="op">=</span> (<span class="fl">0</span>,<span class="fl">4</span>), linestyle<span class="op">=:</span>dashdotdot)</span>
+<span id="cb7-67"><a href="#cb7-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-68"><a href="#cb7-68" aria-hidden="true" tabindex="-1"></a><span class="fu">plot!</span>(t <span class="op">-&gt;</span> <span class="fu">LLGHhaz</span>(t),</span>
+<span id="cb7-69"><a href="#cb7-69" aria-hidden="true" tabindex="-1"></a>    xlabel <span class="op">=</span> <span class="st">"Time (years)"</span>, ylabel <span class="op">=</span> <span class="st">"Baseline Hazard"</span>, title <span class="op">=</span> <span class="st">""</span>,</span>
+<span id="cb7-70"><a href="#cb7-70" aria-hidden="true" tabindex="-1"></a>  xlims <span class="op">=</span> (<span class="fl">0.0001</span>,<span class="fu">maximum</span>(times)),   xticks <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">1</span><span class="op">:</span><span class="fu">maximum</span>(times), label <span class="op">=</span> <span class="st">""</span>, </span>
+<span id="cb7-71"><a href="#cb7-71" aria-hidden="true" tabindex="-1"></a>  xtickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),  ytickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),</span>
+<span id="cb7-72"><a href="#cb7-72" aria-hidden="true" tabindex="-1"></a>  xguidefontsize<span class="op">=</span><span class="fl">18</span>, yguidefontsize<span class="op">=</span><span class="fl">18</span>, linewidth<span class="op">=</span><span class="fl">3</span>,</span>
+<span id="cb7-73"><a href="#cb7-73" aria-hidden="true" tabindex="-1"></a>  linecolor <span class="op">=</span> <span class="st">"red"</span>, ylims <span class="op">=</span> (<span class="fl">0</span>,<span class="fl">4</span>), linestyle<span class="op">=:</span>solid)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="14">
+<!--?xml version="1.0" encoding="utf-8"?-->
+<svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="672" height="480" viewbox="0 0 2688 1920">
+<defs>
+  <clippath id="clip790">
+    <rect x="0" y="0" width="2688" height="1920"></rect>
+  </clippath>
+</defs>
+<path clip-path="url(#clip790)" d="M0 1920 L2688 1920 L2688 0 L0 0  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"></path>
+<defs>
+  <clippath id="clip791">
+    <rect x="537" y="0" width="1883" height="1883"></rect>
+  </clippath>
+</defs>
+<path clip-path="url(#clip790)" d="M262.728 1665.04 L2640.76 1665.04 L2640.76 47.2441 L262.728 47.2441  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"></path>
+<defs>
+  <clippath id="clip792">
+    <rect x="262" y="47" width="2379" height="1619"></rect>
+  </clippath>
+</defs>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="437.23,1665.04 437.23,47.2441 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="611.749,1665.04 611.749,47.2441 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="786.268,1665.04 786.268,47.2441 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="960.787,1665.04 960.787,47.2441 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="1135.31,1665.04 1135.31,47.2441 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="1309.82,1665.04 1309.82,47.2441 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="1484.34,1665.04 1484.34,47.2441 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="1658.86,1665.04 1658.86,47.2441 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="1833.38,1665.04 1833.38,47.2441 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="2007.9,1665.04 2007.9,47.2441 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="2182.42,1665.04 2182.42,47.2441 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="2356.94,1665.04 2356.94,47.2441 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="2531.46,1665.04 2531.46,47.2441 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="262.728,1665.04 2640.76,1665.04 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="437.23,1665.04 437.23,1646.14 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="611.749,1665.04 611.749,1646.14 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="786.268,1665.04 786.268,1646.14 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="960.787,1665.04 960.787,1646.14 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1135.31,1665.04 1135.31,1646.14 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1309.82,1665.04 1309.82,1646.14 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1484.34,1665.04 1484.34,1646.14 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1658.86,1665.04 1658.86,1646.14 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1833.38,1665.04 1833.38,1646.14 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2007.9,1665.04 2007.9,1646.14 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2182.42,1665.04 2182.42,1646.14 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2356.94,1665.04 2356.94,1646.14 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2531.46,1665.04 2531.46,1646.14 "></polyline>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 437.23, 1772.64)" x="437.23" y="1772.64">1</text>
+</g>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 611.749, 1772.64)" x="611.749" y="1772.64">2</text>
+</g>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 786.268, 1772.64)" x="786.268" y="1772.64">3</text>
+</g>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 960.787, 1772.64)" x="960.787" y="1772.64">4</text>
+</g>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 1135.31, 1772.64)" x="1135.31" y="1772.64">5</text>
+</g>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 1309.82, 1772.64)" x="1309.82" y="1772.64">6</text>
+</g>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 1484.34, 1772.64)" x="1484.34" y="1772.64">7</text>
+</g>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 1658.86, 1772.64)" x="1658.86" y="1772.64">8</text>
+</g>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 1833.38, 1772.64)" x="1833.38" y="1772.64">9</text>
+</g>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 2007.9, 1772.64)" x="2007.9" y="1772.64">10</text>
+</g>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 2182.42, 1772.64)" x="2182.42" y="1772.64">11</text>
+</g>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 2356.94, 1772.64)" x="2356.94" y="1772.64">12</text>
+</g>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 2531.46, 1772.64)" x="2531.46" y="1772.64">13</text>
+</g>
+<path clip-path="url(#clip790)" d="M1120.31 1824.1 L1186.09 1824.1 L1186.09 1832.95 L1158.49 1832.95 L1158.49 1901.86 L1147.92 1901.86 L1147.92 1832.95 L1120.31 1832.95 L1120.31 1824.1 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M1192.55 1843.53 L1202.13 1843.53 L1202.13 1901.86 L1192.55 1901.86 L1192.55 1843.53 M1192.55 1820.82 L1202.13 1820.82 L1202.13 1832.95 L1192.55 1832.95 L1192.55 1820.82 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M1267.6 1854.72 Q1271.2 1848.27 1276.2 1845.19 Q1281.2 1842.12 1287.97 1842.12 Q1297.08 1842.12 1302.03 1848.53 Q1306.98 1854.88 1306.98 1866.65 L1306.98 1901.86 L1297.34 1901.86 L1297.34 1866.96 Q1297.34 1858.58 1294.37 1854.52 Q1291.4 1850.45 1285.31 1850.45 Q1277.86 1850.45 1273.54 1855.4 Q1269.22 1860.35 1269.22 1868.89 L1269.22 1901.86 L1259.58 1901.86 L1259.58 1866.96 Q1259.58 1858.53 1256.61 1854.52 Q1253.64 1850.45 1247.45 1850.45 Q1240.1 1850.45 1235.78 1855.45 Q1231.46 1860.4 1231.46 1868.89 L1231.46 1901.86 L1221.82 1901.86 L1221.82 1843.53 L1231.46 1843.53 L1231.46 1852.59 Q1234.74 1847.22 1239.32 1844.67 Q1243.9 1842.12 1250.21 1842.12 Q1256.56 1842.12 1260.99 1845.35 Q1265.47 1848.58 1267.6 1854.72 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M1375.99 1870.3 L1375.99 1874.98 L1331.92 1874.98 Q1332.55 1884.88 1337.86 1890.09 Q1343.23 1895.25 1352.76 1895.25 Q1358.28 1895.25 1363.44 1893.89 Q1368.64 1892.54 1373.75 1889.83 L1373.75 1898.89 Q1368.59 1901.08 1363.17 1902.22 Q1357.76 1903.37 1352.19 1903.37 Q1338.23 1903.37 1330.05 1895.25 Q1321.92 1887.12 1321.92 1873.27 Q1321.92 1858.94 1329.63 1850.56 Q1337.39 1842.12 1350.52 1842.12 Q1362.29 1842.12 1369.11 1849.72 Q1375.99 1857.28 1375.99 1870.3 M1366.4 1867.49 Q1366.3 1859.62 1361.98 1854.93 Q1357.71 1850.25 1350.62 1850.25 Q1342.6 1850.25 1337.76 1854.78 Q1332.97 1859.31 1332.24 1867.54 L1366.4 1867.49 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M1448.64 1820.92 Q1441.66 1832.9 1438.28 1844.62 Q1434.89 1856.34 1434.89 1868.37 Q1434.89 1880.4 1438.28 1892.22 Q1441.72 1904 1448.64 1915.92 L1440.31 1915.92 Q1432.5 1903.68 1428.59 1891.86 Q1424.74 1880.04 1424.74 1868.37 Q1424.74 1856.76 1428.59 1844.99 Q1432.45 1833.21 1440.31 1820.92 L1448.64 1820.92 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M1491.51 1907.28 Q1487.44 1917.69 1483.59 1920.87 Q1479.74 1924.05 1473.28 1924.05 L1465.62 1924.05 L1465.62 1916.03 L1471.25 1916.03 Q1475.21 1916.03 1477.39 1914.15 Q1479.58 1912.28 1482.24 1905.3 L1483.96 1900.92 L1460.36 1843.53 L1470.52 1843.53 L1488.75 1889.15 L1506.98 1843.53 L1517.13 1843.53 L1491.51 1907.28 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M1580.26 1870.3 L1580.26 1874.98 L1536.19 1874.98 Q1536.82 1884.88 1542.13 1890.09 Q1547.5 1895.25 1557.03 1895.25 Q1562.55 1895.25 1567.7 1893.89 Q1572.91 1892.54 1578.02 1889.83 L1578.02 1898.89 Q1572.86 1901.08 1567.44 1902.22 Q1562.03 1903.37 1556.45 1903.37 Q1542.5 1903.37 1534.32 1895.25 Q1526.19 1887.12 1526.19 1873.27 Q1526.19 1858.94 1533.9 1850.56 Q1541.66 1842.12 1554.79 1842.12 Q1566.56 1842.12 1573.38 1849.72 Q1580.26 1857.28 1580.26 1870.3 M1570.67 1867.49 Q1570.57 1859.62 1566.25 1854.93 Q1561.98 1850.25 1554.89 1850.25 Q1546.87 1850.25 1542.03 1854.78 Q1537.24 1859.31 1536.51 1867.54 L1570.67 1867.49 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M1622.5 1872.54 Q1610.88 1872.54 1606.4 1875.19 Q1601.92 1877.85 1601.92 1884.26 Q1601.92 1889.36 1605.26 1892.38 Q1608.64 1895.35 1614.42 1895.35 Q1622.39 1895.35 1627.18 1889.72 Q1632.03 1884.05 1632.03 1874.67 L1632.03 1872.54 L1622.5 1872.54 M1641.61 1868.58 L1641.61 1901.86 L1632.03 1901.86 L1632.03 1893.01 Q1628.75 1898.32 1623.85 1900.87 Q1618.95 1903.37 1611.87 1903.37 Q1602.91 1903.37 1597.6 1898.37 Q1592.34 1893.32 1592.34 1884.88 Q1592.34 1875.04 1598.9 1870.04 Q1605.52 1865.04 1618.59 1865.04 L1632.03 1865.04 L1632.03 1864.1 Q1632.03 1857.49 1627.65 1853.89 Q1623.33 1850.25 1615.47 1850.25 Q1610.47 1850.25 1605.73 1851.44 Q1600.99 1852.64 1596.61 1855.04 L1596.61 1846.18 Q1601.87 1844.15 1606.82 1843.16 Q1611.77 1842.12 1616.45 1842.12 Q1629.11 1842.12 1635.36 1848.68 Q1641.61 1855.25 1641.61 1868.58 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M1695.15 1852.49 Q1693.54 1851.55 1691.61 1851.13 Q1689.74 1850.66 1687.44 1850.66 Q1679.32 1850.66 1674.94 1855.97 Q1670.62 1861.24 1670.62 1871.13 L1670.62 1901.86 L1660.99 1901.86 L1660.99 1843.53 L1670.62 1843.53 L1670.62 1852.59 Q1673.64 1847.28 1678.49 1844.72 Q1683.33 1842.12 1690.26 1842.12 Q1691.25 1842.12 1692.44 1842.28 Q1693.64 1842.38 1695.1 1842.64 L1695.15 1852.49 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M1742.39 1845.25 L1742.39 1854.31 Q1738.33 1852.22 1733.95 1851.18 Q1729.58 1850.14 1724.89 1850.14 Q1717.76 1850.14 1714.16 1852.33 Q1710.62 1854.52 1710.62 1858.89 Q1710.62 1862.22 1713.17 1864.15 Q1715.72 1866.03 1723.43 1867.75 L1726.71 1868.47 Q1736.92 1870.66 1741.19 1874.67 Q1745.52 1878.63 1745.52 1885.77 Q1745.52 1893.89 1739.06 1898.63 Q1732.65 1903.37 1721.4 1903.37 Q1716.71 1903.37 1711.61 1902.43 Q1706.56 1901.55 1700.93 1899.72 L1700.93 1889.83 Q1706.25 1892.59 1711.4 1894 Q1716.56 1895.35 1721.61 1895.35 Q1728.38 1895.35 1732.03 1893.06 Q1735.67 1890.71 1735.67 1886.5 Q1735.67 1882.59 1733.02 1880.51 Q1730.41 1878.42 1721.51 1876.5 L1718.17 1875.71 Q1709.27 1873.84 1705.31 1869.99 Q1701.35 1866.08 1701.35 1859.31 Q1701.35 1851.08 1707.18 1846.6 Q1713.02 1842.12 1723.75 1842.12 Q1729.06 1842.12 1733.75 1842.9 Q1738.43 1843.68 1742.39 1845.25 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M1759.27 1820.92 L1767.6 1820.92 Q1775.41 1833.21 1779.27 1844.99 Q1783.17 1856.76 1783.17 1868.37 Q1783.17 1880.04 1779.27 1891.86 Q1775.41 1903.68 1767.6 1915.92 L1759.27 1915.92 Q1766.19 1904 1769.58 1892.22 Q1773.02 1880.4 1773.02 1868.37 Q1773.02 1856.34 1769.58 1844.62 Q1766.19 1832.9 1759.27 1820.92 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="262.728,1665.04 2640.76,1665.04 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="262.728,1260.59 2640.76,1260.59 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="262.728,856.142 2640.76,856.142 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="262.728,451.693 2640.76,451.693 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="262.728,47.2441 2640.76,47.2441 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="262.728,1665.04 262.728,47.2441 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="262.728,1665.04 281.626,1665.04 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="262.728,1260.59 281.626,1260.59 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="262.728,856.142 281.626,856.142 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="262.728,451.693 281.626,451.693 "></polyline>
+<polyline clip-path="url(#clip790)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="262.728,47.2441 281.626,47.2441 "></polyline>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 185.511, 1699.54)" x="185.511" y="1699.54">0</text>
+</g>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 185.511, 1295.09)" x="185.511" y="1295.09">1</text>
+</g>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 185.511, 890.642)" x="185.511" y="890.642">2</text>
+</g>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 185.511, 486.193)" x="185.511" y="486.193">3</text>
+</g>
+<g clip-path="url(#clip790)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 185.511, 81.7441)" x="185.511" y="81.7441">4</text>
+</g>
+<path clip-path="url(#clip790)" d="M47.8312 1266.92 L76.3207 1266.92 L76.3207 1250.05 Q76.3207 1241.56 72.8311 1237.49 Q69.2894 1233.38 62.0499 1233.38 Q54.7583 1233.38 51.3208 1237.49 Q47.8312 1241.56 47.8312 1250.05 L47.8312 1266.92 M15.8522 1266.92 L39.2896 1266.92 L39.2896 1251.35 Q39.2896 1243.64 36.425 1239.89 Q33.5084 1236.09 27.5709 1236.09 Q21.6855 1236.09 18.7689 1239.89 Q15.8522 1243.64 15.8522 1251.35 L15.8522 1266.92 M7.20644 1277.44 L7.20644 1250.57 Q7.20644 1238.54 12.2064 1232.03 Q17.2064 1225.51 26.4251 1225.51 Q33.5605 1225.51 37.7792 1228.85 Q41.9979 1232.18 43.0396 1238.64 Q44.7062 1230.88 50.0187 1226.61 Q55.2791 1222.29 63.1957 1222.29 Q73.6123 1222.29 79.2894 1229.37 Q84.9664 1236.45 84.9664 1249.53 L84.9664 1277.44 L7.20644 1277.44 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M55.6437 1178.17 Q55.6437 1189.79 58.2999 1194.27 Q60.9562 1198.74 67.3624 1198.74 Q72.4665 1198.74 75.4873 1195.41 Q78.4561 1192.03 78.4561 1186.24 Q78.4561 1178.28 72.8311 1173.48 Q67.154 1168.64 57.7791 1168.64 L55.6437 1168.64 L55.6437 1178.17 M51.6854 1159.06 L84.9664 1159.06 L84.9664 1168.64 L76.1123 1168.64 Q81.4248 1171.92 83.9769 1176.82 Q86.4769 1181.71 86.4769 1188.8 Q86.4769 1197.75 81.4769 1203.07 Q76.4248 1208.33 67.9874 1208.33 Q58.1437 1208.33 53.1437 1201.77 Q48.1437 1195.15 48.1437 1182.08 L48.1437 1168.64 L47.2062 1168.64 Q40.5917 1168.64 36.998 1173.02 Q33.3521 1177.34 33.3521 1185.2 Q33.3521 1190.2 34.55 1194.94 Q35.748 1199.68 38.1438 1204.06 L29.2897 1204.06 Q27.2584 1198.8 26.2688 1193.85 Q25.2272 1188.9 25.2272 1184.21 Q25.2272 1171.56 31.7896 1165.31 Q38.3521 1159.06 51.6854 1159.06 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M28.3522 1102.13 L37.4146 1102.13 Q35.3313 1106.19 34.2896 1110.57 Q33.248 1114.94 33.248 1119.63 Q33.248 1126.77 35.4355 1130.36 Q37.6229 1133.9 41.9979 1133.9 Q45.3312 1133.9 47.2583 1131.35 Q49.1333 1128.8 50.852 1121.09 L51.5812 1117.81 Q53.7687 1107.6 57.7791 1103.33 Q61.7374 1099.01 68.8728 1099.01 Q76.9977 1099.01 81.7373 1105.46 Q86.4769 1111.87 86.4769 1123.12 Q86.4769 1127.81 85.5394 1132.91 Q84.6539 1137.96 82.831 1143.59 L72.9353 1143.59 Q75.6957 1138.28 77.1019 1133.12 Q78.4561 1127.96 78.4561 1122.91 Q78.4561 1116.14 76.1644 1112.49 Q73.8207 1108.85 69.6019 1108.85 Q65.6957 1108.85 63.6124 1111.51 Q61.5291 1114.11 59.602 1123.02 L58.8207 1126.35 Q56.9458 1135.26 53.0916 1139.21 Q49.1854 1143.17 42.4146 1143.17 Q34.1855 1143.17 29.7063 1137.34 Q25.2272 1131.51 25.2272 1120.78 Q25.2272 1115.46 26.0084 1110.78 Q26.7897 1106.09 28.3522 1102.13 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M53.4041 1033.85 L58.0916 1033.85 L58.0916 1077.91 Q67.9874 1077.29 73.1957 1071.97 Q78.3519 1066.61 78.3519 1057.08 Q78.3519 1051.56 76.9977 1046.4 Q75.6436 1041.19 72.9353 1036.09 L81.9977 1036.09 Q84.1852 1041.25 85.331 1046.66 Q86.4769 1052.08 86.4769 1057.65 Q86.4769 1071.61 78.3519 1079.79 Q70.2269 1087.91 56.3728 1087.91 Q42.05 1087.91 33.6646 1080.2 Q25.2272 1072.44 25.2272 1059.32 Q25.2272 1047.55 32.8313 1040.72 Q40.3833 1033.85 53.4041 1033.85 M50.5916 1043.43 Q42.7271 1043.54 38.0396 1047.86 Q33.3521 1052.13 33.3521 1059.21 Q33.3521 1067.23 37.8834 1072.08 Q42.4146 1076.87 50.6437 1077.6 L50.5916 1043.43 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M3.92521 1018.12 L3.92521 1008.54 L84.9664 1008.54 L84.9664 1018.12 L3.92521 1018.12 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M26.6334 988.485 L26.6334 978.902 L84.9664 978.902 L84.9664 988.485 L26.6334 988.485 M3.92521 988.485 L3.92521 978.902 L16.0606 978.902 L16.0606 988.485 L3.92521 988.485 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M49.7583 910.36 L84.9664 910.36 L84.9664 919.944 L50.0708 919.944 Q41.7896 919.944 37.675 923.173 Q33.5605 926.402 33.5605 932.86 Q33.5605 940.621 38.5084 945.1 Q43.4562 949.579 51.9979 949.579 L84.9664 949.579 L84.9664 959.214 L26.6334 959.214 L26.6334 949.579 L35.6959 949.579 Q30.4355 946.141 27.8313 941.506 Q25.2272 936.819 25.2272 930.725 Q25.2272 920.673 31.4771 915.517 Q37.675 910.36 49.7583 910.36 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M53.4041 841.35 L58.0916 841.35 L58.0916 885.413 Q67.9874 884.788 73.1957 879.475 Q78.3519 874.111 78.3519 864.579 Q78.3519 859.059 76.9977 853.902 Q75.6436 848.694 72.9353 843.59 L81.9977 843.59 Q84.1852 848.746 85.331 854.163 Q86.4769 859.579 86.4769 865.152 Q86.4769 879.111 78.3519 887.288 Q70.2269 895.413 56.3728 895.413 Q42.05 895.413 33.6646 887.704 Q25.2272 879.944 25.2272 866.819 Q25.2272 855.048 32.8313 848.225 Q40.3833 841.35 53.4041 841.35 M50.5916 850.934 Q42.7271 851.038 38.0396 855.361 Q33.3521 859.632 33.3521 866.715 Q33.3521 874.736 37.8834 879.579 Q42.4146 884.371 50.6437 885.1 L50.5916 850.934 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M7.20644 791.299 L7.20644 780.778 L39.0813 780.778 L39.0813 742.549 L7.20644 742.549 L7.20644 732.028 L84.9664 732.028 L84.9664 742.549 L47.9354 742.549 L47.9354 780.778 L84.9664 780.778 L84.9664 791.299 L7.20644 791.299 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M55.6437 684.997 Q55.6437 696.612 58.2999 701.091 Q60.9562 705.57 67.3624 705.57 Q72.4665 705.57 75.4873 702.237 Q78.4561 698.851 78.4561 693.07 Q78.4561 685.101 72.8311 680.31 Q67.154 675.466 57.7791 675.466 L55.6437 675.466 L55.6437 684.997 M51.6854 665.883 L84.9664 665.883 L84.9664 675.466 L76.1123 675.466 Q81.4248 678.747 83.9769 683.643 Q86.4769 688.539 86.4769 695.622 Q86.4769 704.58 81.4769 709.893 Q76.4248 715.153 67.9874 715.153 Q58.1437 715.153 53.1437 708.591 Q48.1437 701.976 48.1437 688.903 L48.1437 675.466 L47.2062 675.466 Q40.5917 675.466 36.998 679.841 Q33.3521 684.164 33.3521 692.028 Q33.3521 697.028 34.55 701.768 Q35.748 706.507 38.1438 710.882 L29.2897 710.882 Q27.2584 705.622 26.2688 700.674 Q25.2272 695.726 25.2272 691.039 Q25.2272 678.382 31.7896 672.133 Q38.3521 665.883 51.6854 665.883 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M26.6334 650.31 L26.6334 604.789 L35.3834 604.789 L77.3102 640.831 L77.3102 604.789 L84.9664 604.789 L84.9664 651.612 L76.2165 651.612 L34.2896 615.57 L34.2896 650.31 L26.6334 650.31 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M55.6437 563.644 Q55.6437 575.258 58.2999 579.737 Q60.9562 584.216 67.3624 584.216 Q72.4665 584.216 75.4873 580.883 Q78.4561 577.498 78.4561 571.716 Q78.4561 563.748 72.8311 558.956 Q67.154 554.112 57.7791 554.112 L55.6437 554.112 L55.6437 563.644 M51.6854 544.529 L84.9664 544.529 L84.9664 554.112 L76.1123 554.112 Q81.4248 557.394 83.9769 562.289 Q86.4769 567.185 86.4769 574.268 Q86.4769 583.227 81.4769 588.539 Q76.4248 593.8 67.9874 593.8 Q58.1437 593.8 53.1437 587.237 Q48.1437 580.623 48.1437 567.55 L48.1437 554.112 L47.2062 554.112 Q40.5917 554.112 36.998 558.487 Q33.3521 562.81 33.3521 570.675 Q33.3521 575.675 34.55 580.414 Q35.748 585.154 38.1438 589.529 L29.2897 589.529 Q27.2584 584.268 26.2688 579.321 Q25.2272 574.373 25.2272 569.685 Q25.2272 557.029 31.7896 550.779 Q38.3521 544.529 51.6854 544.529 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M35.5917 490.988 Q34.6542 492.602 34.2375 494.529 Q33.7688 496.404 33.7688 498.696 Q33.7688 506.821 39.0813 511.196 Q44.3417 515.519 54.2374 515.519 L84.9664 515.519 L84.9664 525.154 L26.6334 525.154 L26.6334 515.519 L35.6959 515.519 Q30.3834 512.498 27.8313 507.654 Q25.2272 502.811 25.2272 495.883 Q25.2272 494.894 25.3834 493.696 Q25.4876 492.498 25.748 491.04 L35.5917 490.988 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip790)" d="M35.4875 444.425 L3.92521 444.425 L3.92521 434.842 L84.9664 434.842 L84.9664 444.425 L76.2165 444.425 Q81.4248 447.446 83.9769 452.082 Q86.4769 456.665 86.4769 463.123 Q86.4769 473.696 78.0394 480.363 Q69.6019 486.977 55.852 486.977 Q42.1021 486.977 33.6646 480.363 Q25.2272 473.696 25.2272 463.123 Q25.2272 456.665 27.7792 452.082 Q30.2792 447.446 35.4875 444.425 M55.852 477.081 Q66.4249 477.081 72.4665 472.759 Q78.4561 468.384 78.4561 460.779 Q78.4561 453.175 72.4665 448.8 Q66.4249 444.425 55.852 444.425 Q45.2792 444.425 39.2896 448.8 Q33.248 453.175 33.248 460.779 Q33.248 468.384 39.2896 472.759 Q45.2792 477.081 55.852 477.081 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><polyline clip-path="url(#clip792)" style="stroke:#0000ff; stroke-linecap:round; stroke-linejoin:round; stroke-width:12; stroke-opacity:1; fill:none" points="262.728,483.745 263.696,501.371 264.663,539.943 265.631,577.15 266.599,612.115 267.566,644.787 268.534,675.292 269.502,703.799 270.469,730.48 271.437,755.498 272.404,779 273.372,801.12 274.34,821.978 275.307,841.681 276.275,860.326 276.759,869.277 277.243,877.996 277.726,886.49 278.21,894.77 279.329,913.129 280.447,930.478 281.566,946.901 282.684,962.472 284.921,991.323 287.158,1017.49 289.394,1041.35 291.631,1063.2 293.868,1083.3 296.105,1101.87 298.342,1119.07 300.578,1135.06 302.815,1149.97 305.052,1163.92 307.289,1176.98 309.526,1189.26 311.762,1200.83 313.999,1211.73 318.473,1231.81 322.946,1249.88 327.42,1266.23 331.894,1281.12 336.367,1294.73 340.841,1307.24 345.315,1318.78 349.788,1329.46 358.735,1348.63 367.683,1365.36 376.63,1380.11 385.577,1393.22 394.524,1404.97 403.472,1415.57 412.419,1425.19 421.366,1433.96 432.12,1443.53 442.874,1452.21 453.628,1460.11 464.381,1467.34 485.889,1480.11 507.397,1491.06 525.581,1499.19 543.766,1506.46 561.95,1513 580.135,1518.93 619.642,1530.09 659.148,1539.4 695.57,1546.72 731.992,1553.09 810.088,1564.35 900.57,1574.45 980.98,1581.61 1051.49,1586.87 1128.37,1591.77 1205.7,1596.02 1291.21,1600.08 1372.56,1603.45 1457.15,1606.54 1528.35,1608.87 1615.29,1611.43 1694.93,1613.54 1768.48,1615.32 1842.98,1616.98 1926.48,1618.69 2002.14,1620.12 2088.77,1621.63 2168.99,1622.92 2248.06,1624.11 2324.84,1625.19 2403.55,1626.23 2489.79,1627.29 2615.06,1628.72 2640.76,1629 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#0000ff; stroke-linecap:round; stroke-linejoin:round; stroke-width:12; stroke-opacity:1; fill:none" stroke-dasharray="48, 30" points="262.728,1237.02 262.849,747.091 262.97,601.399 263.091,527.799 263.212,485.168 263.333,459.12 263.454,443.048 263.575,433.426 263.696,428.187 263.817,426.034 263.938,426.108 264.059,427.824 264.179,430.766 264.421,439.2 264.663,449.81 265.147,474.217 265.631,500.09 266.115,525.86 266.599,550.862 267.082,574.823 267.566,597.653 268.05,619.347 268.534,639.946 269.018,659.506 269.502,678.092 269.985,695.77 270.469,712.603 271.437,743.969 272.404,772.621 273.372,798.919 274.34,823.166 275.307,845.616 276.275,866.481 276.759,876.376 277.243,885.941 277.726,895.192 278.21,904.148 279.329,923.801 280.447,942.125 281.566,959.266 282.684,975.346 283.802,990.473 284.921,1004.74 286.039,1018.22 287.158,1030.99 289.394,1054.63 291.631,1076.06 293.868,1095.61 296.105,1113.55 298.342,1130.07 300.578,1145.37 302.815,1159.58 305.052,1172.82 309.526,1196.83 313.999,1218.04 318.473,1236.96 322.946,1253.97 327.42,1269.38 331.894,1283.4 336.367,1296.25 340.841,1308.06 345.315,1318.98 349.788,1329.1 358.735,1347.3 367.683,1363.25 376.63,1377.37 385.577,1389.97 394.524,1401.31 403.472,1411.57 412.419,1420.91 421.366,1429.46 432.12,1438.83 442.874,1447.36 453.628,1455.14 464.381,1462.29 485.889,1474.99 507.397,1485.94 525.581,1494.1 543.766,1501.43 561.95,1508.06 580.135,1514.08 619.642,1525.47 659.148,1535.02 695.57,1542.57 731.992,1549.17 771.04,1555.38 810.088,1560.87 855.329,1566.48 900.57,1571.44 980.98,1578.96 1051.49,1584.5 1128.37,1589.67 1205.7,1594.16 1291.21,1598.46 1372.56,1602.03 1457.15,1605.3 1528.35,1607.77 1615.29,1610.49 1694.93,1612.73 1768.48,1614.61 1842.98,1616.37 1926.48,1618.19 2002.14,1619.7 2088.77,1621.3 2168.99,1622.67 2248.06,1623.93 2324.84,1625.07 2403.55,1626.17 2489.79,1627.3 2615.06,1628.81 2640.76,1629.1 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#0000ff; stroke-linecap:round; stroke-linejoin:round; stroke-width:12; stroke-opacity:1; fill:none" stroke-dasharray="6, 12" points="262.728,-496.312 262.849,-275.764 262.97,-156.622 263.091,-72.213 263.212,-6.15808 263.333,48.3344 263.454,94.803 263.575,135.347 263.696,171.323 263.817,203.66 263.938,233.028 264.059,259.923 264.179,284.725 264.3,307.733 264.421,329.183 264.542,349.268 264.663,368.149 264.905,402.804 265.147,433.981 265.389,462.292 265.631,488.201 265.873,512.068 266.115,534.176 266.357,554.754 266.599,573.99 267.082,609.029 267.566,640.26 268.05,668.385 268.534,693.929 269.018,717.296 269.502,738.804 269.985,758.705 270.469,777.205 271.437,810.652 272.404,840.191 273.372,866.574 274.34,890.357 275.307,911.965 276.275,931.729 276.759,941.004 277.243,949.912 277.726,958.477 278.21,966.723 280.447,1001.23 282.684,1030.89 284.921,1056.76 287.158,1079.64 289.394,1100.06 291.631,1118.46 293.868,1135.16 296.105,1150.41 300.578,1177.35 305.052,1200.5 309.526,1220.68 313.999,1238.5 318.473,1254.39 322.946,1268.67 327.42,1281.62 331.894,1293.42 340.841,1314.21 349.788,1332.01 358.735,1347.47 367.683,1361.08 376.63,1373.17 385.577,1384.01 403.472,1402.72 421.366,1418.35 442.874,1434.12 464.381,1447.42 485.889,1458.83 507.397,1468.75 543.766,1482.94 580.135,1494.68 659.148,1514.47 731.992,1528.13 810.088,1539.64 900.57,1550.23 980.98,1557.89 1051.49,1563.61 1128.37,1569.02 1205.7,1573.77 1291.21,1578.36 1372.56,1582.22 1457.15,1585.8 1528.35,1588.51 1615.29,1591.53 1694.93,1594.04 1768.48,1596.17 1842.98,1598.17 1926.48,1600.24 2002.14,1601.98 2088.77,1603.84 2168.99,1605.44 2248.06,1606.91 2324.84,1608.26 2403.55,1609.56 2489.79,1610.9 2615.06,1612.71 2640.76,1613.07 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#0000ff; stroke-linecap:round; stroke-linejoin:round; stroke-width:12; stroke-opacity:1; fill:none" stroke-dasharray="48, 24, 6, 24" points="262.728,-10864 262.849,-2724.58 262.97,-1537.69 263.091,-980.556 263.212,-641.21 263.333,-407.072 263.454,-233.116 263.575,-97.355 263.696,12.387 263.817,103.467 263.938,180.628 264.059,247.08 264.179,305.086 264.421,401.927 264.663,480.035 264.905,544.752 265.147,599.505 265.389,646.609 265.631,687.688 266.115,756.196 266.599,811.389 267.566,895.706 268.534,957.866 269.502,1006.12 270.469,1044.96 272.404,1104.26 274.34,1147.95 276.275,1181.84 278.21,1209.11 287.158,1289.33 296.105,1334.31 305.052,1363.99 313.999,1385.41 331.894,1414.84 349.788,1434.5 385.577,1459.77 421.366,1475.72 464.381,1488.78 507.397,1498.11 543.766,1504.2 580.135,1509.16 659.148,1517.37 731.992,1522.92 810.088,1527.51 900.57,1531.67 980.98,1534.63 1051.49,1536.82 1128.37,1538.86 1205.7,1540.63 1291.21,1542.33 1372.56,1543.75 1457.15,1545.04 1528.35,1546.02 1615.29,1547.1 1694.93,1547.98 1768.48,1548.73 1842.98,1549.43 1926.48,1550.14 2002.14,1550.74 2088.77,1551.37 2168.99,1551.91 2248.06,1552.41 2324.84,1552.86 2403.55,1553.29 2489.79,1553.73 2615.06,1554.33 2640.76,1554.44 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#0000ff; stroke-linecap:round; stroke-linejoin:round; stroke-width:12; stroke-opacity:1; fill:none" stroke-dasharray="48, 24, 6, 24, 6, 24" points="262.728,1579.93 262.849,1118.48 262.97,890.221 263.091,752 263.212,660.175 263.333,595.967 263.454,549.666 263.575,515.665 263.696,490.463 263.817,471.758 263.938,457.966 264.059,447.961 264.179,440.921 264.3,436.235 264.421,433.433 264.542,432.157 264.663,432.122 264.905,434.926 265.147,440.524 265.389,448.039 265.631,456.874 266.115,476.949 266.599,498.637 267.566,542.891 268.534,585.51 269.502,625.313 270.469,662.09 271.437,695.972 272.404,727.202 273.372,756.042 274.34,782.743 275.307,807.533 276.275,830.615 276.759,841.572 277.243,852.166 277.726,862.417 278.21,872.342 279.329,894.123 280.447,914.428 281.566,933.413 282.684,951.211 283.802,967.939 284.921,983.698 286.039,998.577 287.158,1012.65 289.394,1038.67 291.631,1062.2 293.868,1083.61 296.105,1103.2 298.342,1121.21 300.578,1137.84 302.815,1153.25 305.052,1167.59 307.289,1180.96 309.526,1193.48 311.762,1205.23 313.999,1216.27 318.473,1236.52 322.946,1254.67 327.42,1271.04 331.894,1285.9 336.367,1299.47 340.841,1311.91 345.315,1323.38 349.788,1333.98 358.735,1353 367.683,1369.58 376.63,1384.21 385.577,1397.21 394.524,1408.87 403.472,1419.39 412.419,1428.95 421.366,1437.67 432.12,1447.2 442.874,1455.84 453.628,1463.72 464.381,1470.94 485.889,1483.71 507.397,1494.69 525.581,1502.84 543.766,1510.14 561.95,1516.72 580.135,1522.69 619.642,1533.94 659.148,1543.34 695.57,1550.74 731.992,1557.19 771.04,1563.25 810.088,1568.58 855.329,1574.02 900.57,1578.82 980.98,1586.07 1051.49,1591.39 1128.37,1596.35 1205.7,1600.64 1291.21,1604.74 1372.56,1608.13 1457.15,1611.24 1528.35,1613.58 1615.29,1616.14 1694.93,1618.26 1768.48,1620.04 1842.98,1621.69 1926.48,1623.39 2002.14,1624.81 2088.77,1626.31 2168.99,1627.59 2248.06,1628.77 2324.84,1629.84 2403.55,1630.86 2489.79,1631.91 2615.06,1633.31 2640.76,1633.58 "></polyline>
+<polyline clip-path="url(#clip792)" style="stroke:#ff0000; stroke-linecap:round; stroke-linejoin:round; stroke-width:12; stroke-opacity:1; fill:none" points="262.728,1665.04 262.849,1665.02 262.97,1664.87 263.091,1664.4 263.212,1663.52 263.333,1662.15 263.454,1660.28 263.575,1657.91 263.696,1655.06 263.938,1648.02 264.179,1639.42 264.421,1629.52 264.663,1618.58 264.905,1606.81 265.147,1594.41 265.389,1581.54 265.631,1568.34 266.115,1541.37 266.599,1514.21 267.082,1487.34 267.566,1461.08 268.05,1435.64 268.534,1411.16 269.018,1387.71 269.502,1365.32 269.985,1344 270.469,1323.75 270.953,1304.54 271.437,1286.34 271.921,1269.11 272.404,1252.81 272.888,1237.4 273.372,1222.83 273.856,1209.07 274.34,1196.07 274.824,1183.8 275.307,1172.21 275.791,1161.26 276.275,1150.93 276.759,1141.17 277.243,1131.96 277.485,1127.55 277.726,1123.27 277.968,1119.11 278.21,1115.07 279.329,1097.83 280.447,1082.76 281.566,1069.59 282.684,1058.11 283.802,1048.11 284.921,1039.43 286.039,1031.91 287.158,1025.42 288.276,1019.85 289.394,1015.09 290.513,1011.07 291.631,1007.7 292.75,1004.92 293.868,1002.65 294.986,1000.86 296.105,999.487 298.342,997.842 300.578,997.43 302.815,998.021 305.052,999.428 307.289,1001.5 309.526,1004.12 311.762,1007.17 313.999,1010.59 318.473,1018.23 322.946,1026.62 327.42,1035.47 331.894,1044.57 340.841,1062.98 349.788,1081.13 358.735,1098.65 367.683,1115.39 376.63,1131.27 385.577,1146.31 394.524,1160.52 403.472,1173.94 412.419,1186.61 421.366,1198.6 432.12,1212.16 442.874,1224.86 453.628,1236.79 464.381,1248.01 475.135,1258.57 485.889,1268.54 496.643,1277.96 507.397,1286.88 525.581,1300.93 543.766,1313.83 561.95,1325.71 580.135,1336.7 599.888,1347.73 619.642,1357.94 639.395,1367.42 659.148,1376.24 677.359,1383.85 695.57,1391.02 713.781,1397.77 731.992,1404.15 771.04,1416.7 810.088,1427.94 855.329,1439.59 900.57,1449.99 940.775,1458.35 980.98,1466 1016.24,1472.2 1051.49,1477.97 1089.93,1483.82 1128.37,1489.27 1167.04,1494.39 1205.7,1499.18 1291.21,1508.76 1372.56,1516.78 1457.15,1524.19 1528.35,1529.81 1615.29,1536.02 1694.93,1541.17 1768.48,1545.53 1842.98,1549.61 1926.48,1553.82 2002.14,1557.35 2088.77,1561.1 2168.99,1564.32 2248.06,1567.28 2324.84,1569.97 2403.55,1572.57 2489.79,1575.23 2615.06,1578.82 2640.76,1579.51 "></polyline>
+</svg>
+</div>
+</div>
+</section>
+<section id="best-model-summaries" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="best-model-summaries"><span class="header-section-number">3.5</span> Best-model summaries</h2>
+<div class="cell" data-execution_count="5">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># MLE in the original parameterisation</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>MLE <span class="op">=</span> MLELLGH</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">println</span>(MLE)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 95% Confidence intervals under the reparameterisation</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>CI <span class="op">=</span> <span class="fu">ConfInt</span>(FUN <span class="op">=</span> OPTLLGH[<span class="fl">2</span>], MLE <span class="op">=</span> OPTLLGH[<span class="fl">1</span>].minimizer, level <span class="op">=</span> <span class="fl">0.95</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>CI <span class="op">=</span> <span class="fu">DataFrame</span>(CI, <span class="op">:</span>auto)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="fu">rename!</span>( CI, [<span class="st">"Lower"</span>, <span class="st">"Upper"</span>] )</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="fu">println</span>(CI)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[-0.7183693784128291, 1.1258507232839738, 0.8282291818977023, 0.7405270729888672, 0.41985953386652336, 0.9486806545482077, 0.07200557173840726, 0.6093993558633369, 0.3150899846867708]
+9×2 DataFrame
+ Row │ Lower       Upper     
+     │ Float64     Float64   
+─────┼───────────────────────
+   1 │ -0.883692   -0.553047
+   2 │  0.0596398   0.177438
+   3 │  0.528404    1.12805
+   4 │  0.492198    0.988857
+   5 │  0.119745    0.719974
+   6 │  0.790656    1.10671
+   7 │ -0.0579488   0.20196
+   8 │  0.446133    0.772666
+   9 │  0.149466    0.480714</code></pre>
+</div>
+</div>
+<div class="cell" data-execution_count="6">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fitted baseline hazard function</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(t <span class="op">-&gt;</span> <span class="fu">LLGHhaz</span>(t),</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    xlabel <span class="op">=</span> <span class="st">"Time (years)"</span>, ylabel <span class="op">=</span> <span class="st">"Baseline Hazard"</span>, title <span class="op">=</span> <span class="st">"Best Model"</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  xlims <span class="op">=</span> (<span class="fl">0.0001</span>,<span class="fu">maximum</span>(times)),   xticks <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">1</span><span class="op">:</span><span class="fu">maximum</span>(times), label <span class="op">=</span> <span class="st">""</span>, </span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  xtickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),  ytickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  xguidefontsize<span class="op">=</span><span class="fl">18</span>, yguidefontsize<span class="op">=</span><span class="fl">18</span>, linewidth<span class="op">=</span><span class="fl">3</span>,</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  linecolor <span class="op">=</span> <span class="st">"red"</span>, ylims <span class="op">=</span> (<span class="fl">0</span>,<span class="fl">4</span>), linestyle<span class="op">=:</span>solid)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Average population survival function and KM estimator</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">pop_surv</span>(t<span class="op">::</span><span class="dt">Float64</span>)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  p0 <span class="op">=</span> <span class="fu">size</span>(des_t)[<span class="fl">2</span>]</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  p1 <span class="op">=</span> <span class="fu">size</span>(des)[<span class="fl">2</span>]</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  theta1 <span class="op">=</span> MLE[<span class="fl">1</span>]</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>  theta2 <span class="op">=</span> MLE[<span class="fl">2</span>]</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>  alpha <span class="op">=</span> MLE[<span class="fl">3</span><span class="op">:</span>(<span class="fl">2</span><span class="op">+</span>p0)]</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>  beta <span class="op">=</span> MLE[(<span class="fl">3</span><span class="op">+</span>p0)<span class="op">:</span>(<span class="fl">2</span><span class="op">+</span>p0<span class="op">+</span>p1)]</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  x_alpha <span class="op">=</span> des_t <span class="op">*</span> alpha</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  x_dif <span class="op">=</span> des <span class="op">*</span> beta <span class="op">-</span> x_alpha</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  out <span class="op">=</span> <span class="fu">mean</span>( <span class="fu">exp</span>.( <span class="op">-</span> <span class="fu">chLogLogistic</span>(<span class="fu">t*exp</span>.(x_alpha), theta1, theta2)<span class="op">.*</span> <span class="fu">exp</span>.(x_dif)  )  )</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> out</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Kaplan-Meier estimator </span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>km_fit <span class="op">=</span> <span class="fu">fit</span>(KaplanMeier, times, df.cens)</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>ktimes <span class="op">=</span> <span class="fu">sort</span>(<span class="fu">unique</span>(times))</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>ksurvival_probs <span class="op">=</span> km_fit.survival</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Comparison</span></span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(ktimes, ksurvival_probs,</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>    xlabel <span class="op">=</span> <span class="st">"Time (years)"</span>, ylabel <span class="op">=</span> <span class="st">"Population Survival"</span>, title <span class="op">=</span> <span class="st">"Best Model"</span>,</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>  xlims <span class="op">=</span> (<span class="fl">0.0001</span>,<span class="fu">maximum</span>(times)),   xticks <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">1</span><span class="op">:</span><span class="fu">maximum</span>(times), label <span class="op">=</span> <span class="st">""</span>, </span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>  xtickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),  ytickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>  xguidefontsize<span class="op">=</span><span class="fl">18</span>, yguidefontsize<span class="op">=</span><span class="fl">18</span>, linewidth<span class="op">=</span><span class="fl">3</span>,</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>  linecolor <span class="op">=</span> <span class="st">"gray"</span>, ylims <span class="op">=</span> (<span class="fl">0</span>,<span class="fl">1</span>), linestyle<span class="op">=:</span>solid)</span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a><span class="fu">plot!</span>(t <span class="op">-&gt;</span> <span class="fu">pop_surv</span>(t),</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>  xlabel <span class="op">=</span> <span class="st">"Time (years)"</span>, ylabel <span class="op">=</span> <span class="st">"Population Survival"</span>, title <span class="op">=</span> <span class="st">"Best Model"</span>,</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>xlims <span class="op">=</span> (<span class="fl">0.0001</span>,<span class="fu">maximum</span>(times)),   xticks <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">1</span><span class="op">:</span><span class="fu">maximum</span>(times), label <span class="op">=</span> <span class="st">""</span>, </span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>xtickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),  ytickfont <span class="op">=</span> <span class="fu">font</span>(<span class="fl">16</span>, <span class="st">"Courier"</span>),</span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>xguidefontsize<span class="op">=</span><span class="fl">18</span>, yguidefontsize<span class="op">=</span><span class="fl">18</span>, linewidth<span class="op">=</span><span class="fl">3</span>,</span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>linecolor <span class="op">=</span> <span class="st">"black"</span>, ylims <span class="op">=</span> (<span class="fl">0</span>,<span class="fl">1</span>), linestyle<span class="op">=:</span>solid)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="16">
+<!--?xml version="1.0" encoding="utf-8"?-->
+<svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="672" height="480" viewbox="0 0 2688 1920">
+<defs>
+  <clippath id="clip880">
+    <rect x="0" y="0" width="2688" height="1920"></rect>
+  </clippath>
+</defs>
+<path clip-path="url(#clip880)" d="M0 1920 L2688 1920 L2688 0 L0 0  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"></path>
+<defs>
+  <clippath id="clip881">
+    <rect x="537" y="0" width="1883" height="1883"></rect>
+  </clippath>
+</defs>
+<path clip-path="url(#clip880)" d="M410.315 1665.04 L2640.76 1665.04 L2640.76 127.792 L410.315 127.792  Z" fill="#ffffff" fill-rule="evenodd" fill-opacity="1"></path>
+<defs>
+  <clippath id="clip882">
+    <rect x="410" y="127" width="2231" height="1538"></rect>
+  </clippath>
+</defs>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="573.987,1665.04 573.987,127.792 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="737.675,1665.04 737.675,127.792 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="901.362,1665.04 901.362,127.792 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="1065.05,1665.04 1065.05,127.792 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="1228.74,1665.04 1228.74,127.792 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="1392.43,1665.04 1392.43,127.792 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="1556.11,1665.04 1556.11,127.792 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="1719.8,1665.04 1719.8,127.792 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="1883.49,1665.04 1883.49,127.792 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="2047.18,1665.04 2047.18,127.792 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="2210.87,1665.04 2210.87,127.792 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="2374.55,1665.04 2374.55,127.792 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="2538.24,1665.04 2538.24,127.792 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="410.315,1665.04 2640.76,1665.04 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="573.987,1665.04 573.987,1646.14 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="737.675,1665.04 737.675,1646.14 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="901.362,1665.04 901.362,1646.14 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1065.05,1665.04 1065.05,1646.14 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1228.74,1665.04 1228.74,1646.14 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1392.43,1665.04 1392.43,1646.14 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1556.11,1665.04 1556.11,1646.14 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1719.8,1665.04 1719.8,1646.14 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="1883.49,1665.04 1883.49,1646.14 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2047.18,1665.04 2047.18,1646.14 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2210.87,1665.04 2210.87,1646.14 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2374.55,1665.04 2374.55,1646.14 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="2538.24,1665.04 2538.24,1646.14 "></polyline>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 573.987, 1772.64)" x="573.987" y="1772.64">1</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 737.675, 1772.64)" x="737.675" y="1772.64">2</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 901.362, 1772.64)" x="901.362" y="1772.64">3</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 1065.05, 1772.64)" x="1065.05" y="1772.64">4</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 1228.74, 1772.64)" x="1228.74" y="1772.64">5</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 1392.43, 1772.64)" x="1392.43" y="1772.64">6</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 1556.11, 1772.64)" x="1556.11" y="1772.64">7</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 1719.8, 1772.64)" x="1719.8" y="1772.64">8</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 1883.49, 1772.64)" x="1883.49" y="1772.64">9</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 2047.18, 1772.64)" x="2047.18" y="1772.64">10</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 2210.87, 1772.64)" x="2210.87" y="1772.64">11</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 2374.55, 1772.64)" x="2374.55" y="1772.64">12</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 2538.24, 1772.64)" x="2538.24" y="1772.64">13</text>
+</g>
+<path clip-path="url(#clip880)" d="M1194.11 1824.1 L1259.89 1824.1 L1259.89 1832.95 L1232.28 1832.95 L1232.28 1901.86 L1221.71 1901.86 L1221.71 1832.95 L1194.11 1832.95 L1194.11 1824.1 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1266.34 1843.53 L1275.93 1843.53 L1275.93 1901.86 L1266.34 1901.86 L1266.34 1843.53 M1266.34 1820.82 L1275.93 1820.82 L1275.93 1832.95 L1266.34 1832.95 L1266.34 1820.82 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1341.4 1854.72 Q1344.99 1848.27 1349.99 1845.19 Q1354.99 1842.12 1361.76 1842.12 Q1370.87 1842.12 1375.82 1848.53 Q1380.77 1854.88 1380.77 1866.65 L1380.77 1901.86 L1371.14 1901.86 L1371.14 1866.96 Q1371.14 1858.58 1368.17 1854.52 Q1365.2 1850.45 1359.1 1850.45 Q1351.66 1850.45 1347.33 1855.4 Q1343.01 1860.35 1343.01 1868.89 L1343.01 1901.86 L1333.38 1901.86 L1333.38 1866.96 Q1333.38 1858.53 1330.41 1854.52 Q1327.44 1850.45 1321.24 1850.45 Q1313.9 1850.45 1309.57 1855.45 Q1305.25 1860.4 1305.25 1868.89 L1305.25 1901.86 L1295.61 1901.86 L1295.61 1843.53 L1305.25 1843.53 L1305.25 1852.59 Q1308.53 1847.22 1313.11 1844.67 Q1317.7 1842.12 1324 1842.12 Q1330.35 1842.12 1334.78 1845.35 Q1339.26 1848.58 1341.4 1854.72 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1449.78 1870.3 L1449.78 1874.98 L1405.72 1874.98 Q1406.34 1884.88 1411.66 1890.09 Q1417.02 1895.25 1426.55 1895.25 Q1432.07 1895.25 1437.23 1893.89 Q1442.44 1892.54 1447.54 1889.83 L1447.54 1898.89 Q1442.38 1901.08 1436.97 1902.22 Q1431.55 1903.37 1425.98 1903.37 Q1412.02 1903.37 1403.84 1895.25 Q1395.72 1887.12 1395.72 1873.27 Q1395.72 1858.94 1403.43 1850.56 Q1411.19 1842.12 1424.31 1842.12 Q1436.08 1842.12 1442.91 1849.72 Q1449.78 1857.28 1449.78 1870.3 M1440.2 1867.49 Q1440.09 1859.62 1435.77 1854.93 Q1431.5 1850.25 1424.42 1850.25 Q1416.4 1850.25 1411.55 1854.78 Q1406.76 1859.31 1406.03 1867.54 L1440.2 1867.49 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1522.44 1820.92 Q1515.46 1832.9 1512.07 1844.62 Q1508.69 1856.34 1508.69 1868.37 Q1508.69 1880.4 1512.07 1892.22 Q1515.51 1904 1522.44 1915.92 L1514.1 1915.92 Q1506.29 1903.68 1502.38 1891.86 Q1498.53 1880.04 1498.53 1868.37 Q1498.53 1856.76 1502.38 1844.99 Q1506.24 1833.21 1514.1 1820.92 L1522.44 1820.92 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1565.3 1907.28 Q1561.24 1917.69 1557.38 1920.87 Q1553.53 1924.05 1547.07 1924.05 L1539.42 1924.05 L1539.42 1916.03 L1545.04 1916.03 Q1549 1916.03 1551.19 1914.15 Q1553.37 1912.28 1556.03 1905.3 L1557.75 1900.92 L1534.16 1843.53 L1544.31 1843.53 L1562.54 1889.15 L1580.77 1843.53 L1590.93 1843.53 L1565.3 1907.28 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1654.05 1870.3 L1654.05 1874.98 L1609.99 1874.98 Q1610.61 1884.88 1615.93 1890.09 Q1621.29 1895.25 1630.82 1895.25 Q1636.34 1895.25 1641.5 1893.89 Q1646.71 1892.54 1651.81 1889.83 L1651.81 1898.89 Q1646.65 1901.08 1641.24 1902.22 Q1635.82 1903.37 1630.25 1903.37 Q1616.29 1903.37 1608.11 1895.25 Q1599.99 1887.12 1599.99 1873.27 Q1599.99 1858.94 1607.7 1850.56 Q1615.46 1842.12 1628.58 1842.12 Q1640.35 1842.12 1647.18 1849.72 Q1654.05 1857.28 1654.05 1870.3 M1644.47 1867.49 Q1644.36 1859.62 1640.04 1854.93 Q1635.77 1850.25 1628.69 1850.25 Q1620.67 1850.25 1615.82 1854.78 Q1611.03 1859.31 1610.3 1867.54 L1644.47 1867.49 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1696.29 1872.54 Q1684.68 1872.54 1680.2 1875.19 Q1675.72 1877.85 1675.72 1884.26 Q1675.72 1889.36 1679.05 1892.38 Q1682.44 1895.35 1688.22 1895.35 Q1696.19 1895.35 1700.98 1889.72 Q1705.82 1884.05 1705.82 1874.67 L1705.82 1872.54 L1696.29 1872.54 M1715.4 1868.58 L1715.4 1901.86 L1705.82 1901.86 L1705.82 1893.01 Q1702.54 1898.32 1697.64 1900.87 Q1692.75 1903.37 1685.66 1903.37 Q1676.71 1903.37 1671.39 1898.37 Q1666.13 1893.32 1666.13 1884.88 Q1666.13 1875.04 1672.7 1870.04 Q1679.31 1865.04 1692.38 1865.04 L1705.82 1865.04 L1705.82 1864.1 Q1705.82 1857.49 1701.45 1853.89 Q1697.12 1850.25 1689.26 1850.25 Q1684.26 1850.25 1679.52 1851.44 Q1674.78 1852.64 1670.4 1855.04 L1670.4 1846.18 Q1675.66 1844.15 1680.61 1843.16 Q1685.56 1842.12 1690.25 1842.12 Q1702.9 1842.12 1709.15 1848.68 Q1715.4 1855.25 1715.4 1868.58 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1768.95 1852.49 Q1767.33 1851.55 1765.4 1851.13 Q1763.53 1850.66 1761.24 1850.66 Q1753.11 1850.66 1748.74 1855.97 Q1744.41 1861.24 1744.41 1871.13 L1744.41 1901.86 L1734.78 1901.86 L1734.78 1843.53 L1744.41 1843.53 L1744.41 1852.59 Q1747.44 1847.28 1752.28 1844.72 Q1757.12 1842.12 1764.05 1842.12 Q1765.04 1842.12 1766.24 1842.28 Q1767.44 1842.38 1768.89 1842.64 L1768.95 1852.49 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1816.19 1845.25 L1816.19 1854.31 Q1812.12 1852.22 1807.75 1851.18 Q1803.37 1850.14 1798.69 1850.14 Q1791.55 1850.14 1787.96 1852.33 Q1784.41 1854.52 1784.41 1858.89 Q1784.41 1862.22 1786.97 1864.15 Q1789.52 1866.03 1797.23 1867.75 L1800.51 1868.47 Q1810.72 1870.66 1814.99 1874.67 Q1819.31 1878.63 1819.31 1885.77 Q1819.31 1893.89 1812.85 1898.63 Q1806.45 1903.37 1795.2 1903.37 Q1790.51 1903.37 1785.4 1902.43 Q1780.35 1901.55 1774.73 1899.72 L1774.73 1889.83 Q1780.04 1892.59 1785.2 1894 Q1790.35 1895.35 1795.4 1895.35 Q1802.17 1895.35 1805.82 1893.06 Q1809.47 1890.71 1809.47 1886.5 Q1809.47 1882.59 1806.81 1880.51 Q1804.21 1878.42 1795.3 1876.5 L1791.97 1875.71 Q1783.06 1873.84 1779.1 1869.99 Q1775.14 1866.08 1775.14 1859.31 Q1775.14 1851.08 1780.98 1846.6 Q1786.81 1842.12 1797.54 1842.12 Q1802.85 1842.12 1807.54 1842.9 Q1812.23 1843.68 1816.19 1845.25 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1833.06 1820.92 L1841.39 1820.92 Q1849.21 1833.21 1853.06 1844.99 Q1856.97 1856.76 1856.97 1868.37 Q1856.97 1880.04 1853.06 1891.86 Q1849.21 1903.68 1841.39 1915.92 L1833.06 1915.92 Q1839.99 1904 1843.37 1892.22 Q1846.81 1880.4 1846.81 1868.37 Q1846.81 1856.34 1843.37 1844.62 Q1839.99 1832.9 1833.06 1820.92 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="410.315,1665.04 2640.76,1665.04 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="410.315,1357.59 2640.76,1357.59 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="410.315,1050.14 2640.76,1050.14 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="410.315,742.691 2640.76,742.691 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="410.315,435.242 2640.76,435.242 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none" points="410.315,127.792 2640.76,127.792 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="410.315,1665.04 410.315,127.792 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="410.315,1665.04 429.213,1665.04 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="410.315,1357.59 429.213,1357.59 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="410.315,1050.14 429.213,1050.14 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="410.315,742.691 429.213,742.691 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="410.315,435.242 429.213,435.242 "></polyline>
+<polyline clip-path="url(#clip880)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none" points="410.315,127.792 429.213,127.792 "></polyline>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 259.305, 1699.54)" x="259.305" y="1699.54">0.0</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 259.305, 1392.09)" x="259.305" y="1392.09">0.2</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 259.305, 1084.64)" x="259.305" y="1084.64">0.4</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 259.305, 777.191)" x="259.305" y="777.191">0.6</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 259.305, 469.742)" x="259.305" y="469.742">0.8</text>
+</g>
+<g clip-path="url(#clip880)">
+<text style="fill:#000000; fill-opacity:1; font-family:Courier,Courier New,Lucida Sans Typewriter,Lucida Typewriter,monospace; font-size:118px; text-anchor:middle;" transform="rotate(0, 259.305, 162.292)" x="259.305" y="162.292">1.0</text>
+</g>
+<path clip-path="url(#clip880)" d="M15.8522 1387.85 L45.0708 1387.85 L45.0708 1374.62 Q45.0708 1367.27 41.2688 1363.26 Q37.4667 1359.25 30.4355 1359.25 Q23.4564 1359.25 19.6543 1363.26 Q15.8522 1367.27 15.8522 1374.62 L15.8522 1387.85 M7.20644 1398.37 L7.20644 1374.62 Q7.20644 1361.54 13.1439 1354.88 Q19.0293 1348.16 30.4355 1348.16 Q41.9458 1348.16 47.8312 1354.88 Q53.7166 1361.54 53.7166 1374.62 L53.7166 1387.85 L84.9664 1387.85 L84.9664 1398.37 L7.20644 1398.37 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M33.3521 1315.66 Q33.3521 1323.37 39.3938 1327.85 Q45.3833 1332.33 55.852 1332.33 Q66.3207 1332.33 72.3623 1327.9 Q78.3519 1323.42 78.3519 1315.66 Q78.3519 1308 72.3103 1303.52 Q66.2686 1299.04 55.852 1299.04 Q45.4875 1299.04 39.4459 1303.52 Q33.3521 1308 33.3521 1315.66 M25.2272 1315.66 Q25.2272 1303.16 33.3521 1296.02 Q41.4771 1288.89 55.852 1288.89 Q70.1749 1288.89 78.3519 1296.02 Q86.4769 1303.16 86.4769 1315.66 Q86.4769 1328.21 78.3519 1335.35 Q70.1749 1342.43 55.852 1342.43 Q41.4771 1342.43 33.3521 1335.35 Q25.2272 1328.21 25.2272 1315.66 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M76.2165 1263.73 L107.154 1263.73 L107.154 1273.37 L26.6334 1273.37 L26.6334 1263.73 L35.4875 1263.73 Q30.2792 1260.71 27.7792 1256.13 Q25.2272 1251.49 25.2272 1245.09 Q25.2272 1234.46 33.6646 1227.85 Q42.1021 1221.18 55.852 1221.18 Q69.6019 1221.18 78.0394 1227.85 Q86.4769 1234.46 86.4769 1245.09 Q86.4769 1251.49 83.9769 1256.13 Q81.4248 1260.71 76.2165 1263.73 M55.852 1231.13 Q45.2792 1231.13 39.2896 1235.5 Q33.248 1239.83 33.248 1247.43 Q33.248 1255.03 39.2896 1259.41 Q45.2792 1263.73 55.852 1263.73 Q66.4249 1263.73 72.4665 1259.41 Q78.4561 1255.03 78.4561 1247.43 Q78.4561 1239.83 72.4665 1235.5 Q66.4249 1231.13 55.852 1231.13 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M61.9457 1206.28 L26.6334 1206.28 L26.6334 1196.7 L61.5812 1196.7 Q69.8624 1196.7 74.029 1193.47 Q78.1436 1190.24 78.1436 1183.78 Q78.1436 1176.02 73.1957 1171.54 Q68.2478 1167.01 59.7062 1167.01 L26.6334 1167.01 L26.6334 1157.43 L84.9664 1157.43 L84.9664 1167.01 L76.0082 1167.01 Q81.3206 1170.5 83.9248 1175.14 Q86.4769 1179.72 86.4769 1185.82 Q86.4769 1195.87 80.2269 1201.08 Q73.9769 1206.28 61.9457 1206.28 M25.2272 1182.17 L25.2272 1182.17 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M3.92521 1137.69 L3.92521 1128.11 L84.9664 1128.11 L84.9664 1137.69 L3.92521 1137.69 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M55.6437 1081.55 Q55.6437 1093.16 58.2999 1097.64 Q60.9562 1102.12 67.3624 1102.12 Q72.4665 1102.12 75.4873 1098.78 Q78.4561 1095.4 78.4561 1089.62 Q78.4561 1081.65 72.8311 1076.86 Q67.154 1072.01 57.7791 1072.01 L55.6437 1072.01 L55.6437 1081.55 M51.6854 1062.43 L84.9664 1062.43 L84.9664 1072.01 L76.1123 1072.01 Q81.4248 1075.3 83.9769 1080.19 Q86.4769 1085.09 86.4769 1092.17 Q86.4769 1101.13 81.4769 1106.44 Q76.4248 1111.7 67.9874 1111.7 Q58.1437 1111.7 53.1437 1105.14 Q48.1437 1098.52 48.1437 1085.45 L48.1437 1072.01 L47.2062 1072.01 Q40.5917 1072.01 36.998 1076.39 Q33.3521 1080.71 33.3521 1088.58 Q33.3521 1093.58 34.55 1098.32 Q35.748 1103.06 38.1438 1107.43 L29.2897 1107.43 Q27.2584 1102.17 26.2688 1097.22 Q25.2272 1092.27 25.2272 1087.59 Q25.2272 1074.93 31.7896 1068.68 Q38.3521 1062.43 51.6854 1062.43 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M10.071 1033.21 L26.6334 1033.21 L26.6334 1013.47 L34.0813 1013.47 L34.0813 1033.21 L65.7478 1033.21 Q72.8832 1033.21 74.9144 1031.29 Q76.9457 1029.31 76.9457 1023.32 L76.9457 1013.47 L84.9664 1013.47 L84.9664 1023.32 Q84.9664 1034.41 80.8519 1038.63 Q76.6852 1042.85 65.7478 1042.85 L34.0813 1042.85 L34.0813 1049.88 L26.6334 1049.88 L26.6334 1042.85 L10.071 1042.85 L10.071 1033.21 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M26.6334 1000.87 L26.6334 991.285 L84.9664 991.285 L84.9664 1000.87 L26.6334 1000.87 M3.92521 1000.87 L3.92521 991.285 L16.0606 991.285 L16.0606 1000.87 L3.92521 1000.87 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M33.3521 948.629 Q33.3521 956.338 39.3938 960.817 Q45.3833 965.296 55.852 965.296 Q66.3207 965.296 72.3623 960.869 Q78.3519 956.39 78.3519 948.629 Q78.3519 940.973 72.3103 936.494 Q66.2686 932.015 55.852 932.015 Q45.4875 932.015 39.4459 936.494 Q33.3521 940.973 33.3521 948.629 M25.2272 948.629 Q25.2272 936.129 33.3521 928.994 Q41.4771 921.859 55.852 921.859 Q70.1749 921.859 78.3519 928.994 Q86.4769 936.129 86.4769 948.629 Q86.4769 961.181 78.3519 968.317 Q70.1749 975.4 55.852 975.4 Q41.4771 975.4 33.3521 968.317 Q25.2272 961.181 25.2272 948.629 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M49.7583 857.484 L84.9664 857.484 L84.9664 867.067 L50.0708 867.067 Q41.7896 867.067 37.675 870.296 Q33.5605 873.525 33.5605 879.984 Q33.5605 887.744 38.5084 892.223 Q43.4562 896.702 51.9979 896.702 L84.9664 896.702 L84.9664 906.338 L26.6334 906.338 L26.6334 896.702 L35.6959 896.702 Q30.4355 893.265 27.8313 888.63 Q25.2272 883.942 25.2272 877.848 Q25.2272 867.796 31.4771 862.64 Q37.675 857.484 49.7583 857.484 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M9.75851 757.432 L20.0189 757.432 Q17.1543 763.422 15.7481 768.734 Q14.3418 774.047 14.3418 778.995 Q14.3418 787.588 17.6751 792.276 Q21.0085 796.911 27.1543 796.911 Q32.3105 796.911 34.9667 793.838 Q37.5709 790.713 39.1854 782.068 L40.4875 775.713 Q42.7271 763.943 48.4041 758.37 Q54.0291 752.745 63.5082 752.745 Q74.8102 752.745 80.6435 760.349 Q86.4769 767.901 86.4769 782.536 Q86.4769 788.057 85.2269 794.307 Q83.9769 800.505 81.529 807.172 L70.6957 807.172 Q74.2894 800.765 76.1123 794.62 Q77.9352 788.474 77.9352 782.536 Q77.9352 773.526 74.3936 768.63 Q70.8519 763.734 64.2895 763.734 Q58.5603 763.734 55.3312 767.276 Q52.102 770.766 50.4875 778.786 L49.2375 785.193 Q46.8937 796.963 41.8938 802.224 Q36.8938 807.484 27.9876 807.484 Q17.6751 807.484 11.7377 800.245 Q5.8002 792.953 5.8002 780.193 Q5.8002 774.724 6.78978 769.047 Q7.77936 763.37 9.75851 757.432 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M61.9457 737.745 L26.6334 737.745 L26.6334 728.162 L61.5812 728.162 Q69.8624 728.162 74.029 724.933 Q78.1436 721.703 78.1436 715.245 Q78.1436 707.485 73.1957 703.006 Q68.2478 698.474 59.7062 698.474 L26.6334 698.474 L26.6334 688.891 L84.9664 688.891 L84.9664 698.474 L76.0082 698.474 Q81.3206 701.964 83.9248 706.599 Q86.4769 711.183 86.4769 717.276 Q86.4769 727.328 80.2269 732.537 Q73.9769 737.745 61.9457 737.745 M25.2272 713.63 L25.2272 713.63 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M35.5917 635.35 Q34.6542 636.964 34.2375 638.891 Q33.7688 640.766 33.7688 643.058 Q33.7688 651.183 39.0813 655.558 Q44.3417 659.881 54.2374 659.881 L84.9664 659.881 L84.9664 669.516 L26.6334 669.516 L26.6334 659.881 L35.6959 659.881 Q30.3834 656.86 27.8313 652.016 Q25.2272 647.173 25.2272 640.245 Q25.2272 639.256 25.3834 638.058 Q25.4876 636.86 25.748 635.402 L35.5917 635.35 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M26.6334 632.173 L26.6334 622.016 L75.5915 603.787 L26.6334 585.558 L26.6334 575.402 L84.9664 597.277 L84.9664 610.298 L26.6334 632.173 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M26.6334 562.173 L26.6334 552.59 L84.9664 552.59 L84.9664 562.173 L26.6334 562.173 M3.92521 562.173 L3.92521 552.59 L16.0606 552.59 L16.0606 562.173 L3.92521 562.173 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M26.6334 539.413 L26.6334 529.256 L75.5915 511.027 L26.6334 492.798 L26.6334 482.642 L84.9664 504.517 L84.9664 517.538 L26.6334 539.413 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M55.6437 442.903 Q55.6437 454.517 58.2999 458.996 Q60.9562 463.476 67.3624 463.476 Q72.4665 463.476 75.4873 460.142 Q78.4561 456.757 78.4561 450.976 Q78.4561 443.007 72.8311 438.215 Q67.154 433.372 57.7791 433.372 L55.6437 433.372 L55.6437 442.903 M51.6854 423.788 L84.9664 423.788 L84.9664 433.372 L76.1123 433.372 Q81.4248 436.653 83.9769 441.549 Q86.4769 446.444 86.4769 453.528 Q86.4769 462.486 81.4769 467.798 Q76.4248 473.059 67.9874 473.059 Q58.1437 473.059 53.1437 466.496 Q48.1437 459.882 48.1437 446.809 L48.1437 433.372 L47.2062 433.372 Q40.5917 433.372 36.998 437.747 Q33.3521 442.069 33.3521 449.934 Q33.3521 454.934 34.55 459.674 Q35.748 464.413 38.1438 468.788 L29.2897 468.788 Q27.2584 463.528 26.2688 458.58 Q25.2272 453.632 25.2272 448.944 Q25.2272 436.288 31.7896 430.038 Q38.3521 423.788 51.6854 423.788 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M3.92521 404.049 L3.92521 394.466 L84.9664 394.466 L84.9664 404.049 L3.92521 404.049 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1312.09 43.6931 L1312.09 65.8515 L1325.22 65.8515 Q1331.82 65.8515 1334.98 63.1374 Q1338.18 60.3828 1338.18 54.752 Q1338.18 49.0808 1334.98 46.4072 Q1331.82 43.6931 1325.22 43.6931 L1312.09 43.6931 M1312.09 18.8205 L1312.09 37.0496 L1324.21 37.0496 Q1330.2 37.0496 1333.12 34.8216 Q1336.07 32.5531 1336.07 27.935 Q1336.07 23.3575 1333.12 21.089 Q1330.2 18.8205 1324.21 18.8205 L1312.09 18.8205 M1303.91 12.096 L1324.81 12.096 Q1334.17 12.096 1339.23 15.9849 Q1344.3 19.8737 1344.3 27.0438 Q1344.3 32.5936 1341.71 35.8748 Q1339.11 39.156 1334.09 39.9662 Q1340.13 41.2625 1343.45 45.3944 Q1346.81 49.4858 1346.81 55.6432 Q1346.81 63.745 1341.3 68.1605 Q1335.79 72.576 1325.62 72.576 L1303.91 72.576 L1303.91 12.096 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1399.31 48.0275 L1399.31 51.6733 L1365.04 51.6733 Q1365.52 59.3701 1369.66 63.421 Q1373.83 67.4314 1381.24 67.4314 Q1385.54 67.4314 1389.55 66.3781 Q1393.6 65.3249 1397.57 63.2184 L1397.57 70.267 Q1393.56 71.9684 1389.34 72.8596 Q1385.13 73.7508 1380.8 73.7508 Q1369.94 73.7508 1363.58 67.4314 Q1357.26 61.1119 1357.26 50.3365 Q1357.26 39.1965 1363.26 32.6746 Q1369.29 26.1121 1379.5 26.1121 Q1388.66 26.1121 1393.96 32.0264 Q1399.31 37.9003 1399.31 48.0275 M1391.86 45.84 Q1391.77 39.7232 1388.41 36.0774 Q1385.09 32.4315 1379.58 32.4315 Q1373.34 32.4315 1369.58 35.9558 Q1365.85 39.4801 1365.28 45.8805 L1391.86 45.84 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1440.47 28.5427 L1440.47 35.5912 Q1437.31 33.9709 1433.9 33.1607 Q1430.5 32.3505 1426.86 32.3505 Q1421.31 32.3505 1418.51 34.0519 Q1415.76 35.7533 1415.76 39.156 Q1415.76 41.7486 1417.74 43.2475 Q1419.73 44.7058 1425.72 46.0426 L1428.27 46.6097 Q1436.21 48.3111 1439.53 51.4303 Q1442.9 54.509 1442.9 60.0587 Q1442.9 66.3781 1437.87 70.0644 Q1432.89 73.7508 1424.14 73.7508 Q1420.5 73.7508 1416.53 73.0216 Q1412.6 72.3329 1408.22 70.9151 L1408.22 63.2184 Q1412.35 65.3654 1416.36 66.4591 Q1420.37 67.5124 1424.3 67.5124 Q1429.57 67.5124 1432.41 65.73 Q1435.24 63.9071 1435.24 60.6258 Q1435.24 57.5877 1433.17 55.9673 Q1431.15 54.3469 1424.22 52.8481 L1421.63 52.2405 Q1414.7 50.7821 1411.62 47.7845 Q1408.55 44.7463 1408.55 39.4801 Q1408.55 33.0797 1413.08 29.5959 Q1417.62 26.1121 1425.96 26.1121 Q1430.1 26.1121 1433.74 26.7198 Q1437.39 27.3274 1440.47 28.5427 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1462.14 14.324 L1462.14 27.2059 L1477.49 27.2059 L1477.49 32.9987 L1462.14 32.9987 L1462.14 57.6282 Q1462.14 63.1779 1463.64 64.7578 Q1465.18 66.3376 1469.84 66.3376 L1477.49 66.3376 L1477.49 72.576 L1469.84 72.576 Q1461.21 72.576 1457.93 69.3758 Q1454.64 66.1351 1454.64 57.6282 L1454.64 32.9987 L1449.18 32.9987 L1449.18 27.2059 L1454.64 27.2059 L1454.64 14.324 L1462.14 14.324 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1513.99 12.096 L1526.18 12.096 L1541.62 53.2532 L1557.13 12.096 L1569.33 12.096 L1569.33 72.576 L1561.35 72.576 L1561.35 19.4686 L1545.75 60.9499 L1537.53 60.9499 L1521.93 19.4686 L1521.93 72.576 L1513.99 72.576 L1513.99 12.096 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1602.83 32.4315 Q1596.83 32.4315 1593.35 37.1306 Q1589.86 41.7891 1589.86 49.9314 Q1589.86 58.0738 1593.31 62.7728 Q1596.79 67.4314 1602.83 67.4314 Q1608.78 67.4314 1612.27 62.7323 Q1615.75 58.0333 1615.75 49.9314 Q1615.75 41.8701 1612.27 37.1711 Q1608.78 32.4315 1602.83 32.4315 M1602.83 26.1121 Q1612.55 26.1121 1618.1 32.4315 Q1623.65 38.7509 1623.65 49.9314 Q1623.65 61.0714 1618.1 67.4314 Q1612.55 73.7508 1602.83 73.7508 Q1593.06 73.7508 1587.51 67.4314 Q1582.01 61.0714 1582.01 49.9314 Q1582.01 38.7509 1587.51 32.4315 Q1593.06 26.1121 1602.83 26.1121 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1665.86 34.0924 L1665.86 9.54393 L1673.31 9.54393 L1673.31 72.576 L1665.86 72.576 L1665.86 65.7705 Q1663.51 69.8214 1659.9 71.8063 Q1656.34 73.7508 1651.32 73.7508 Q1643.09 73.7508 1637.91 67.1883 Q1632.76 60.6258 1632.76 49.9314 Q1632.76 39.2371 1637.91 32.6746 Q1643.09 26.1121 1651.32 26.1121 Q1656.34 26.1121 1659.9 28.0971 Q1663.51 30.0415 1665.86 34.0924 M1640.46 49.9314 Q1640.46 58.1548 1643.82 62.8538 Q1647.22 67.5124 1653.14 67.5124 Q1659.05 67.5124 1662.46 62.8538 Q1665.86 58.1548 1665.86 49.9314 Q1665.86 41.7081 1662.46 37.0496 Q1659.05 32.3505 1653.14 32.3505 Q1647.22 32.3505 1643.82 37.0496 Q1640.46 41.7081 1640.46 49.9314 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1727.47 48.0275 L1727.47 51.6733 L1693.2 51.6733 Q1693.69 59.3701 1697.82 63.421 Q1701.99 67.4314 1709.41 67.4314 Q1713.7 67.4314 1717.71 66.3781 Q1721.76 65.3249 1725.73 63.2184 L1725.73 70.267 Q1721.72 71.9684 1717.51 72.8596 Q1713.29 73.7508 1708.96 73.7508 Q1698.1 73.7508 1691.74 67.4314 Q1685.42 61.1119 1685.42 50.3365 Q1685.42 39.1965 1691.42 32.6746 Q1697.46 26.1121 1707.66 26.1121 Q1716.82 26.1121 1722.13 32.0264 Q1727.47 37.9003 1727.47 48.0275 M1720.02 45.84 Q1719.94 39.7232 1716.58 36.0774 Q1713.25 32.4315 1707.75 32.4315 Q1701.51 32.4315 1697.74 35.9558 Q1694.01 39.4801 1693.45 45.8805 L1720.02 45.84 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><path clip-path="url(#clip880)" d="M1739.71 9.54393 L1747.16 9.54393 L1747.16 72.576 L1739.71 72.576 L1739.71 9.54393 Z" fill="#000000" fill-rule="nonzero" fill-opacity="1"></path><polyline clip-path="url(#clip882)" style="stroke:#808080; stroke-linecap:round; stroke-linejoin:round; stroke-width:12; stroke-opacity:1; fill:none" points="410.747,166.113 411.195,198.538 411.643,223.594 412.091,241.28 412.54,257.493 412.988,276.653 413.436,297.287 413.884,309.078 414.332,319.395 414.78,335.608 415.229,347.399 415.677,350.347 416.125,356.242 416.573,365.085 417.021,373.929 417.469,382.772 417.917,388.667 418.366,390.141 418.814,396.037 419.262,400.458 419.71,401.932 420.158,404.88 420.606,410.775 421.055,422.566 421.503,425.514 421.951,431.41 422.399,434.357 422.847,441.736 423.295,443.211 423.743,449.114 424.192,463.87 424.64,466.821 425.088,471.248 425.536,477.151 425.984,480.102 426.432,483.053 426.881,490.432 427.329,494.864 427.777,500.774 428.225,506.684 428.673,511.117 429.121,512.594 429.569,518.504 430.018,519.981 430.466,524.414 430.914,528.846 431.362,531.801 431.81,536.234 432.258,542.144 433.155,545.099 433.603,546.576 434.051,551.009 434.499,553.964 434.947,561.351 435.395,562.829 435.844,571.694 436.74,573.171 437.188,579.081 437.636,580.559 438.084,582.036 438.532,583.514 438.981,589.424 439.429,593.856 439.877,598.289 440.325,601.244 440.773,607.154 441.221,608.631 441.67,614.541 442.118,617.496 442.566,620.451 443.014,623.406 443.462,626.361 443.91,630.794 444.358,639.659 444.807,642.614 445.703,644.091 446.151,648.524 446.599,657.388 447.047,663.298 447.944,666.253 448.392,670.686 448.84,676.596 449.288,682.506 449.736,683.983 450.184,688.416 450.633,707.623 451.081,710.578 451.529,713.533 451.977,719.443 452.425,723.876 452.873,725.353 453.322,729.786 453.77,732.741 454.218,740.128 454.666,743.083 455.562,744.561 456.01,746.038 456.459,746.038 456.907,748.998 457.355,753.438 457.803,757.877 458.251,757.877 458.699,759.359 459.148,762.324 460.492,765.289 460.94,768.253 461.388,769.735 461.836,771.218 462.733,772.7 463.181,775.665 464.077,780.119 464.525,781.604 464.974,783.088 465.422,784.573 465.87,786.061 466.318,787.55 467.214,789.04 467.662,790.53 468.111,792.02 468.559,793.51 469.007,794.999 469.455,799.469 469.903,800.958 470.351,802.448 470.8,805.428 471.696,806.918 472.144,808.407 473.488,811.387 473.937,814.367 474.833,818.844 475.281,820.336 475.729,821.829 476.625,824.814 477.97,827.804 478.418,829.299 479.314,833.784 480.211,835.279 480.659,836.774 481.555,839.764 482.451,845.744 482.9,847.239 483.348,848.735 483.796,848.735 484.244,853.236 485.589,854.737 486.037,856.237 486.485,857.738 486.933,860.739 487.381,862.24 488.277,863.74 488.726,865.241 489.174,866.741 489.622,869.742 490.07,871.243 490.518,872.744 490.966,874.244 491.415,875.745 491.863,878.746 492.311,880.246 492.759,881.747 493.207,881.747 493.655,883.25 494.552,886.263 495,889.276 495.448,892.288 496.792,893.795 497.241,896.807 497.689,898.317 498.137,905.863 499.033,907.372 500.378,908.882 502.17,913.41 502.618,913.41 503.067,917.947 503.963,917.947 504.411,920.977 504.859,924.008 505.307,924.008 505.755,927.045 506.204,928.564 506.652,933.119 507.1,934.638 507.996,936.156 508.444,937.675 508.892,939.197 510.237,942.24 510.685,945.283 511.133,948.333 514.27,952.908 515.167,955.958 515.615,957.483 516.063,960.532 516.511,962.057 517.407,963.582 517.856,963.582 518.304,965.11 519.2,966.639 520.544,968.167 520.993,972.752 521.441,972.752 521.889,975.815 522.337,977.346 522.785,978.878 524.13,980.41 524.578,981.941 525.026,983.473 525.474,985.004 527.267,989.599 528.163,991.131 528.611,992.662 530.852,994.194 531.3,994.194 532.196,995.729 534.437,997.268 535.334,998.806 535.782,1000.35 536.23,1001.88 538.022,1003.42 538.471,1006.5 541.608,1006.5 542.056,1009.58 542.952,1011.13 543.4,1012.67 543.848,1014.21 544.745,1018.84 545.641,1020.38 546.089,1023.46 549.226,1025.01 549.674,1026.55 550.123,1028.09 550.571,1029.63 551.019,1031.18 552.363,1034.27 552.811,1037.36 553.708,1038.91 555.5,1042 555.949,1045.09 556.397,1046.64 557.293,1049.73 558.189,1051.28 558.637,1052.82 559.534,1052.82 560.43,1054.37 561.326,1057.47 561.775,1059.02 562.223,1062.13 562.671,1066.79 563.119,1068.35 563.567,1069.9 564.912,1074.56 565.808,1076.12 568.049,1077.68 568.497,1080.79 569.841,1082.35 570.289,1083.91 571.186,1085.47 571.634,1088.58 572.082,1091.7 572.53,1093.26 572.978,1094.82 573.427,1096.37 573.875,1097.93 574.771,1099.49 575.219,1101.05 576.115,1102.61 576.564,1104.17 577.012,1105.73 577.908,1108.86 578.356,1110.42 578.804,1111.98 579.253,1113.55 581.941,1116.68 582.838,1119.81 583.734,1122.95 584.63,1126.08 585.078,1126.08 586.423,1127.65 588.216,1127.65 590.008,1132.38 590.456,1133.96 591.353,1135.53 591.801,1137.11 592.249,1144.99 592.697,1146.56 593.145,1148.14 593.593,1149.71 595.386,1151.29 595.834,1154.44 596.73,1157.59 597.179,1159.17 600.316,1160.75 601.66,1162.32 602.108,1163.9 602.556,1165.47 603.005,1168.63 606.142,1168.63 607.486,1171.79 609.279,1173.37 610.175,1174.95 610.623,1178.11 611.071,1179.69 611.52,1181.27 611.968,1182.85 612.416,1184.43 613.312,1186.02 616.001,1187.6 616.897,1189.18 617.346,1189.18 617.794,1192.35 618.242,1193.94 619.138,1195.52 619.586,1197.11 620.034,1198.69 620.483,1203.45 621.379,1206.63 623.171,1208.21 623.62,1209.8 624.068,1212.97 624.964,1216.14 625.86,1217.73 627.205,1217.73 627.653,1217.73 628.997,1217.73 629.446,1219.33 630.79,1220.94 631.238,1222.54 633.031,1224.14 633.927,1227.35 635.72,1227.35 636.616,1227.35 639.305,1228.96 639.753,1230.58 641.546,1232.19 641.994,1233.81 642.442,1235.42 644.235,1237.04 644.683,1238.65 646.475,1240.27 650.061,1241.88 650.509,1245.11 650.957,1246.73 652.301,1248.35 653.646,1249.96 657.231,1251.58 659.024,1253.19 659.472,1254.81 661.264,1256.42 662.161,1258.04 662.609,1261.27 663.057,1262.88 663.505,1262.88 664.85,1262.88 666.642,1267.77 667.539,1269.39 668.883,1271.02 671.124,1272.65 672.02,1274.28 673.365,1275.91 674.261,1275.91 676.502,1277.54 676.95,1279.18 678.742,1280.81 680.087,1280.81 684.12,1284.1 684.568,1285.74 685.465,1285.74 690.394,1287.39 691.291,1289.04 691.739,1290.68 692.635,1290.68 693.083,1292.34 694.876,1294 696.669,1295.65 697.565,1298.97 700.254,1298.97 702.943,1300.63 703.839,1303.96 705.632,1305.62 706.976,1305.62 707.424,1307.29 710.113,1308.97 711.458,1310.64 716.387,1313.98 716.835,1315.65 717.284,1317.32 719.076,1319 719.524,1319 720.421,1319 722.661,1320.68 725.799,1324.06 727.143,1324.06 730.28,1327.45 731.176,1329.15 731.624,1330.85 735.658,1332.54 736.106,1334.24 739.691,1335.94 740.139,1337.63 741.036,1337.63 742.38,1339.34 746.862,1341.04 747.758,1342.75 754.032,1344.45 754.48,1347.86 755.377,1349.57 757.617,1349.57 758.962,1351.28 759.858,1353 764.34,1353 766.132,1354.72 770.166,1356.45 779.129,1358.17 782.714,1359.89 785.851,1361.62 788.54,1361.62 793.47,1363.35 793.918,1365.09 794.366,1366.83 800.64,1368.57 806.018,1370.32 809.155,1370.32 810.051,1373.83 813.188,1375.58 814.533,1375.58 815.429,1375.58 819.014,1375.58 822.151,1375.58 823.944,1377.38 828.874,1379.18 830.666,1379.18 832.907,1379.18 837.389,1381 840.078,1381 845.455,1381 853.074,1381 855.763,1382.85 863.83,1382.85 864.726,1384.72 867.863,1384.72 872.345,1386.6 874.585,1388.48 877.722,1388.48 881.308,1390.38 882.204,1392.27 885.341,1394.17 889.822,1396.06 899.682,1397.96 909.989,1399.85 912.678,1401.74 914.919,1403.64 919.849,1405.53 926.123,1407.43 936.43,1409.32 940.464,1411.22 953.908,1411.22 965.112,1411.22 966.905,1411.22 970.042,1415.09 970.49,1418.97 973.627,1420.9 976.764,1422.84 977.66,1422.84 990.657,1422.84 993.346,1422.84 1000.96,1422.84 1004.1,1422.84 1019.34,1422.84 1024.72,1422.84 1030.54,1424.91 1062.81,1426.98 1063.71,1426.98 1074.01,1426.98 1075.81,1429.09 1079.39,1429.09 1079.84,1431.21 1102.25,1433.34 1109.42,1433.34 1113,1435.48 1114.35,1437.63 1117.93,1439.78 1118.83,1439.78 1154.23,1439.78 1158.27,1439.78 1169.47,1439.78 1177.09,1439.78 1177.98,1439.78 1186.05,1439.78 1188.74,1442.1 1190.53,1442.1 1194.57,1444.44 1199.94,1446.79 1216.53,1446.79 1216.97,1449.16 1221.9,1451.54 1230.87,1451.54 1247,1453.93 1263.13,1453.93 1265.37,1453.93 1281.06,1453.93 1284.65,1453.93 1289.13,1453.93 1290.92,1456.48 1291.82,1459.02 1311.09,1461.56 1311.53,1461.56 1313.78,1461.56 1317.81,1461.56 1324.98,1461.56 1327.22,1461.56 1336.63,1464.28 1341.11,1464.28 1347.83,1467.03 1364.42,1467.03 1372.48,1469.82 1394.44,1469.82 1407.89,1472.65 1414.61,1472.65 1421.78,1475.52 1440.6,1478.39 1471.52,1478.39 1478.7,1478.39 1483.18,1478.39 1494.38,1478.39 1494.83,1478.39 1504.24,1481.5 1511.86,1484.61 1523.06,1484.61 1538.3,1484.61 1539.64,1487.83 1541.44,1487.83 1581.77,1491.18 1584.46,1491.18 1599.7,1491.18 1621.21,1491.18 1630.17,1491.18 1633.31,1491.18 1634.65,1494.88 1645.41,1494.88 1652.58,1494.88 1671.85,1494.88 1702.32,1494.88 1718.46,1494.88 1723.39,1494.88 1765.96,1494.88 1769.99,1494.88 1774.03,1494.88 1783.89,1494.88 1825.57,1494.88 1847.97,1494.88 1872.17,1494.88 1936.71,1494.88 1937.16,1500.19 1965.39,1500.19 1969.87,1500.19 1986.45,1500.19 2031.27,1500.19 2043.82,1500.19 2057.26,1500.19 2083.25,1500.19 2098.04,1500.19 2122.69,1507.36 2166.16,1507.36 2176.47,1507.36 2181.85,1507.36 2210.53,1507.36 2258.03,1507.36 2262.51,1507.36 2297.47,1507.36 2335.56,1507.36 2349.9,1507.36 2353.94,1507.36 2379.48,1507.36 2403.68,1507.36 2422.95,1507.36 2470.01,1507.36 2494.21,1507.36 2510.34,1529.89 2535.89,1529.89 2547.54,1529.89 2559.19,1529.89 2616.11,1529.89 2635.38,1597.46 2640.76,1597.46 "></polyline>
+<polyline clip-path="url(#clip882)" style="stroke:#000000; stroke-linecap:round; stroke-linejoin:round; stroke-width:12; stroke-opacity:1; fill:none" points="410.315,129.397 411.223,176.242 412.13,210.048 413.038,239.005 413.946,264.884 414.853,288.507 415.761,310.352 416.668,330.735 417.576,349.882 419.391,385.098 421.206,416.959 422.114,431.839 423.021,446.102 423.929,459.8 424.837,472.979 426.935,501.659 429.033,528.161 431.131,552.79 433.229,575.789 435.327,597.355 437.425,617.647 439.523,636.802 441.621,654.933 445.816,688.497 450.012,718.969 454.208,746.83 458.404,772.457 462.6,796.15 466.796,818.155 470.992,838.671 475.188,857.867 479.384,875.884 483.58,892.842 487.776,908.845 491.972,923.982 500.364,951.958 508.756,977.283 517.148,1000.36 525.54,1021.51 533.932,1040.98 542.324,1058.99 550.716,1075.72 559.108,1091.31 569.194,1108.72 579.281,1124.84 589.367,1139.82 599.453,1153.8 619.626,1179.14 639.799,1201.56 656.855,1218.62 673.911,1234.21 690.967,1248.52 708.023,1261.71 745.078,1287.16 782.133,1309.03 816.294,1326.67 850.455,1342.34 887.08,1357.34 923.705,1370.77 966.138,1384.71 1008.57,1397.17 1083.99,1416.4 1150.13,1430.8 1222.23,1444.45 1294.77,1456.44 1374.96,1468.07 1451.27,1477.83 1530.61,1486.86 1597.39,1493.73 1678.93,1501.33 1753.63,1507.64 1822.61,1513 1892.49,1518.02 1970.81,1523.22 2041.78,1527.58 2123.03,1532.21 2198.26,1536.19 2272.44,1539.86 2344.45,1543.2 2418.27,1546.42 2499.16,1549.74 2616.65,1554.19 2640.76,1555.06 "></polyline>
+</svg>
+</div>
+</div>
+<div class="cell" data-execution_count="7">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Confidence intervals for the survival function based on a normal approximation</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># at specific time points t0</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Hessian and asymptotic covariance matrix</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>HESS <span class="op">=</span> ForwardDiff.<span class="fu">hessian</span>(OPTLLGH[<span class="fl">2</span>], OPTLLGH[<span class="fl">1</span>].minimizer);</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>Sigma <span class="op">=</span> <span class="fu">inv</span>(HESS);</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co">#= </span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co">A "hackish" workaround to a bug in ForwardDiff, which may</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="co">produce non-symmetric hessian matrices.</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="co">Here, I am replacing the lower diagonal of Sigma by its </span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="co">upper diagonal</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="co">=#</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>ps <span class="op">=</span> <span class="fu">size</span>(Sigma, <span class="fl">1</span>)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span>ps<span class="op">-</span><span class="fl">1</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> j <span class="kw">in</span> i<span class="op">+</span><span class="fl">1</span><span class="op">:</span>ps</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>        Sigma[i, j] <span class="op">=</span> Sigma[j, i]</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Reparameterised MLE </span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>r_MLE <span class="op">=</span> OPTLLGH[<span class="fl">1</span>].minimizer;</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a><span class="co"># The function to obtain approximate CIs based on Monte Carlo simulations </span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a><span class="co"># from the asymptotic normal distribution of the MLEs</span></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a><span class="co"># t0 : time where the confidence interval will be calculated</span></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a><span class="co"># level : confidence level</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a><span class="co"># nmc : number of Monte Carlo iterations</span></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">ConfIntSurv</span>(t0<span class="op">::</span><span class="dt">Float64</span>, level<span class="op">::</span><span class="dt">Float64</span>, nmc<span class="op">::</span><span class="dt">Int64</span>)</span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>    p0 <span class="op">=</span> <span class="fu">size</span>(des_t)[<span class="fl">2</span>]</span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>    p1 <span class="op">=</span> <span class="fu">size</span>(des)[<span class="fl">2</span>]</span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>    mc <span class="op">=</span> <span class="fu">fill</span>(<span class="fl">0.0</span>, nmc)</span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">S_par</span>(par<span class="op">::</span><span class="dt">Vector{Float64}</span>)</span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>        outs <span class="op">=</span> <span class="fu">mean</span>( <span class="fu">exp</span>.( <span class="op">-</span> <span class="fu">chLogLogistic</span>(t0<span class="op">.*</span><span class="fu">exp</span>.(des_t <span class="op">*</span> par[<span class="fl">3</span><span class="op">:</span>(<span class="fl">2</span><span class="op">+</span>p0)]), par[<span class="fl">1</span>], par[<span class="fl">2</span>]) <span class="op">.*</span></span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>                                        <span class="fu">exp</span>.( des <span class="op">*</span> par[(<span class="fl">3</span><span class="op">+</span>p0)<span class="op">:</span>(<span class="fl">2</span><span class="op">+</span>p0<span class="op">+</span>p1)]<span class="op">.-</span> des_t <span class="op">*</span> par[<span class="fl">3</span><span class="op">:</span>(<span class="fl">2</span><span class="op">+</span>p0)])  )  )</span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>                                        <span class="cf">return</span> outs</span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span>nmc</span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>      mv_normal <span class="op">=</span> <span class="fu">MvNormal</span>(r_MLE, Sigma) </span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>      val <span class="op">=</span> <span class="fu">rand</span>(mv_normal, <span class="fl">1</span>)</span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a>      val1 <span class="op">=</span> [val[<span class="fl">1</span>],<span class="fu">exp</span>(val[<span class="fl">2</span>]),val[<span class="fl">3</span><span class="op">:</span><span class="kw">end</span>]<span class="op">...</span>]</span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a>      mc[i] <span class="op">=</span> <span class="fu">S_par</span>(val1)</span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a>    L <span class="op">=</span> <span class="fu">quantile</span>(mc,(<span class="fl">1</span><span class="op">-</span>level)<span class="op">*</span><span class="fl">0.5</span>)</span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a>    U <span class="op">=</span> <span class="fu">quantile</span>(mc,(<span class="fl">1</span><span class="op">+</span>level)<span class="op">*</span><span class="fl">0.5</span>)</span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a>    M <span class="op">=</span> <span class="fu">S_par</span>(MLE)</span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [L,M,U]</span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a><span class="co"># times for CIs calculations</span></span>
+<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a>timesCI <span class="op">=</span> [<span class="fl">1.0</span>,<span class="fl">2.5</span>,<span class="fl">5</span>,<span class="fl">7.5</span>,<span class="fl">10</span>,<span class="fl">12.5</span>];</span>
+<span id="cb11-62"><a href="#cb11-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-63"><a href="#cb11-63" aria-hidden="true" tabindex="-1"></a>CIS <span class="op">=</span> <span class="fu">zeros</span>(<span class="fu">length</span>(timesCI), <span class="fl">4</span>);</span>
+<span id="cb11-64"><a href="#cb11-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-65"><a href="#cb11-65" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fu">length</span>(timesCI)</span>
+<span id="cb11-66"><a href="#cb11-66" aria-hidden="true" tabindex="-1"></a>CIS[k,<span class="op">:</span>] <span class="op">=</span> <span class="fu">vcat</span>(timesCI[k], <span class="fu">ConfIntSurv</span>(timesCI[k],<span class="fl">0.95</span>,<span class="fl">10000</span>))</span>
+<span id="cb11-67"><a href="#cb11-67" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span>
+<span id="cb11-68"><a href="#cb11-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-69"><a href="#cb11-69" aria-hidden="true" tabindex="-1"></a>CIS <span class="op">=</span> <span class="fu">DataFrame</span>(CIS, <span class="op">:</span>auto);</span>
+<span id="cb11-70"><a href="#cb11-70" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb11-71"><a href="#cb11-71" aria-hidden="true" tabindex="-1"></a><span class="fu">rename!</span>( CIS, [<span class="st">"year"</span>,<span class="st">"lower"</span>,<span class="st">"population survival"</span>,<span class="st">"upper"</span>] );</span>
+<span id="cb11-72"><a href="#cb11-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-73"><a href="#cb11-73" aria-hidden="true" tabindex="-1"></a><span class="fu">println</span>(CIS)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>6×4 DataFrame
+ Row │ year     lower      population survival  upper     
+     │ Float64  Float64    Float64              Float64   
+─────┼────────────────────────────────────────────────────
+   1 │     1.0  0.335479             0.356815   0.380269
+   2 │     2.5  0.201698             0.219102   0.239836
+   3 │     5.0  0.127659             0.142754   0.160797
+   4 │     7.5  0.0951545            0.108917   0.125896
+   5 │    10.0  0.0767494            0.0892138  0.105421
+   6 │    12.5  0.064639             0.0761296  0.0913768</code></pre>
+</div>
+</div>
+
+</section>
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-chen:2001" class="csl-entry" role="listitem">
+Chen, Y. Q., and N. P. Jewell. 2001. <span>“On a General Class of Semiparametric Hazards Regression Models.”</span> <em>Biometrika</em> 88 (3): 687–702.
+</div>
+<div id="ref-chen:2000" class="csl-entry" role="listitem">
+Chen, Y. Q., and M. C. Wang. 2000. <span>“Analysis of Accelerated Hazards Models.”</span> <em>Journal of the American Statistical Association</em> 95 (450): 608–18.
+</div>
+<div id="ref-cox:1972" class="csl-entry" role="listitem">
+Cox, D. R. 1972. <span>“Regression Models and Life-Tables.”</span> <em>Journal of the Royal Statistical Society: Series B (Methodological)</em> 34 (2): 187–202.
+</div>
+<div id="ref-kalbfleisch:2011" class="csl-entry" role="listitem">
+Kalbfleisch, J. D., and R. L. Prentice. 2011. <em>The Statistical Analysis of Failure Time Data</em>. John Wiley &amp; Sons.
+</div>
+<div id="ref-rubio:2019" class="csl-entry" role="listitem">
+Rubio, F. J., L. Remontet, N. P. Jewell, and A. Belot. 2019. <span>“On a General Structure for Hazard-Based Regression Models: An Application to Population-Based Cancer Research.”</span> <em>Statistical Methods in Medical Research</em> 28: 2404–17.
+</div>
+</div></section></div></main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

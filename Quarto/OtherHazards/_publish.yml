@@ -1,0 +1,4 @@
+- source: hazards.qmd
+  quarto-pub:
+    - id: 13c3a923-49fc-4e85-add1-f72ff72aa89b
+      url: 'https://fjrubio.quarto.pub/some-hazard-functions-in-julia'
